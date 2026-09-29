@@ -178,14 +178,18 @@ def _check_schema(stmt: exp.Expression, schema: Schema) -> str | None:
     return None
 
 
-def validate(raw_sql: str | None, schema: Schema) -> GuardResult:
-    """Valida uma Consulta. Retorna GuardResult(ok=True, sql=...) se aprovada."""
+def validate(raw_sql: str | None, schema: Schema, dialect: str = "sqlite") -> GuardResult:
+    """Valida uma Consulta. Retorna GuardResult(ok=True, sql=...) se aprovada.
+
+    `dialect` e o dialeto SQL usado no parse (sqlglot): "sqlite", "postgres",
+    "mysql". Conexoes a bancos reais passam o dialeto da propria fonte.
+    """
     sql = clean_sql(raw_sql)
     if not sql:
         return GuardResult(False, error="A Consulta esta vazia.")
 
     try:
-        statements = sqlglot.parse(sql, read="sqlite")
+        statements = sqlglot.parse(sql, read=dialect)
     except ParseError as exc:
         return GuardResult(False, error=f"Erro de sintaxe SQL: {exc}")
 

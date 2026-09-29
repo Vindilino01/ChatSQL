@@ -57,7 +57,17 @@ A ideia e que qualquer integrante consiga ler e entender em ~20 minutos.
 | `prompt.py` | Monta prompts (modo IA) | Separar texto de logica |
 | `provider.py` | Cliente OpenAI-compatible | Multi-provedor |
 | `pipeline.py` | Orquestra gerar -> validar -> executar | Um lugar para o fluxo |
-| `db.py` / `sheets.py` / `sql_dump.py` | **A IMPLEMENTAR** | Ver `ROADMAP.md` |
+| `db.py` | Conexao somente-leitura (SQLite/Postgres) | Consultar bancos reais |
+| `sheets.py` / `sql_dump.py` | **A IMPLEMENTAR** | Ver `ROADMAP.md` |
+
+### Conexao a banco real (`db.py`)
+
+`DatabaseSource` usa SQLAlchemy para: abrir a conexao, **introspectar** o schema
+(tabelas, colunas, tipos e FKs) e executar passando pela Trava no dialeto da fonte.
+Suporta SQLite (testes) e Postgres (demo). A seguranca e em camadas: usuario
+somente-leitura, sessao em modo leitura quando possivel, timeout por dialeto e a
+Trava bloqueando qualquer coisa que nao seja `SELECT`. A ligacao na tela e a
+frente C do `ROADMAP.md`.
 
 ## 4. A Trava (seguranca)
 

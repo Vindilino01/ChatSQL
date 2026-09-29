@@ -34,7 +34,7 @@ Voce escreve uma pergunta ("os 10 clientes que mais compraram no mes passado") e
 
 - **Planilha**: CSV, XLSX ou XLS (uma tabela por aba/arquivo).
 - **Script SQL**: `CREATE TABLE` (+ `INSERT INTO` para usar os seus dados).
-- **Conexao**: banco real somente-leitura — **A IMPLEMENTAR** (ver `ROADMAP.md`).
+- **Conexao**: banco real somente-leitura (motor pronto para SQLite/Postgres; ligacao na tela no `ROADMAP.md`).
 
 ## Como rodar (3 passos)
 
