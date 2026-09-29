@@ -14,7 +14,7 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-Se tudo passar (125 testes + 7 guias `skip`), voce esta pronto.
+Se tudo passar (133 testes + 6 guias `skip`), voce esta pronto.
 
 ## 2. Fluxo de trabalho
 

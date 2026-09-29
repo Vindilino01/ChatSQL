@@ -2,7 +2,7 @@
 
 **Projeto A3 — Chatbot de consultas em linguagem natural para qualquer instituicao**
 **Metodologia:** pesquisa aplicada + desenvolvimento incremental
-**Status:** `fundacao + conector de banco (referencia)` — features do roadmap em desenvolvimento
+**Status:** `conexao a banco (SQLite/Postgres) + fundacao` — features do roadmap em desenvolvimento
 
 ---
 
@@ -160,7 +160,7 @@ pytest
 | Acuracia do Motor Offline (biblioteca) | a medir |
 | Acuracia do Motor Offline (e-commerce) | a medir |
 | Perguntas de avaliacao | a definir (15-20 por schema) |
-| Testes automatizados | 125 (fundacao) + 7 guias desativados |
+| Testes automatizados | 133 + 6 guias desativados |
 
 ---
 
@@ -181,8 +181,9 @@ pytest
 - O Motor Offline cobre um **vocabulario controlado**; perguntas fora dele retornam
   "nao entendi" (por design).
 - Sem login e sem multi-tenant nesta fase (uma instancia por instituicao).
-- Conexao a banco real: conector de referencia pronto (SQLite/Postgres); falta a
-  ligacao na tela e o MySQL. Google Sheets e o dump `.sql` estao no `ROADMAP.md`.
+- Conexao a banco real ja funciona na tela (SQLite/Postgres); faltam MySQL, botao
+  de testar conexao e seletor visual de tabelas. Google Sheets e dump `.sql` estao
+  no `ROADMAP.md`.
 - Evolucoes possiveis: ajuste de tipos de coluna na planilha, joins manuais entre arquivos,
   multiusuario, suporte a mais dialetos (SQL Server, Oracle).
 

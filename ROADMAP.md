@@ -1,6 +1,6 @@
 # ROADMAP — Chat SQL
 
-A base está pronta (125 testes). Falta isto, dividido em 5 frentes:
+A base está pronta (133 testes). Falta isto, dividido em 5 frentes:
 
 ## Frentes
 
@@ -24,7 +24,8 @@ A base está pronta (125 testes). Falta isto, dividido em 5 frentes:
 - Preencher o placar em `tests/eval/cases.json` e registrar a acurácia no `PRD.md`.
 
 **C — Interface**
-- Ligar `DatabaseSource` na aba Dados: URL, "Testar conexão" e escolha de tabelas.
+- Conexão já ligada na aba Dados (URL + conectar). Evoluir: botão "Testar
+  conexão", seletor visual de tabelas e salvar a conexão (sem a senha).
 
 **D — Dados**
 - Biblioteca: `schemas/biblioteca.sql` + gerador de 10k registros.

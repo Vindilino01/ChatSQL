@@ -25,6 +25,7 @@ from chat_sql.config import (
     SAMPLE_ROWS_MIN,
 )
 from chat_sql import store
+from chat_sql.db import DatabaseConfig, DatabaseSource
 from chat_sql.engine import InMemoryDatabase, QueryError
 from chat_sql.nl.engine import suggest_questions
 from chat_sql.offline import OfflineEngine
@@ -42,8 +43,11 @@ EXAMPLE_SCHEMAS = ["e-commerce", "rh", "vendas"]
 PRESET_LABELS = [OFFLINE_PROVIDER, *PROVIDER_PRESETS]
 
 SOURCE_SPREADSHEET = "Planilhas (CSV/Excel)"
+SOURCE_DATABASE = "Banco de dados (Postgres/SQLite)"
 SOURCE_SCRIPT = "Script SQL (CREATE + INSERT)"
 SOURCE_EXAMPLE = "Schema de exemplo"
+
+PREVIEW_TABLES = 12
 
 MAX_TURNS = 20
 
@@ -149,6 +153,8 @@ def _init_state() -> None:
         "pending_question": None,
         "example_preset": "e-commerce",
         "source_mode": SOURCE_SPREADSHEET,
+        "db_url": "",
+        "db_tables": "",
     }
     for key, value in defaults.items():
         st.session_state.setdefault(key, value)
@@ -287,7 +293,10 @@ def _remember_question(question: str) -> None:
 
 def _row_counts(schema: Schema, database, data) -> dict[str, int]:
     counts: dict[str, int] = {}
-    for table in schema.tables.values():
+    tables = list(schema.tables.values())
+    if data is None:
+        tables = tables[:PREVIEW_TABLES]
+    for table in tables:
         if data is not None:
             rows = data.rows.get(table.name)
             counts[table.name] = len(rows) if rows is not None else 0
@@ -409,17 +418,72 @@ def _render_sidebar() -> None:
 # ---------------------------------------------------------------------------
 
 
+def _connect_database() -> None:
+    url = (st.session_state.get("db_url") or "").strip()
+    if not url:
+        st.warning("Informe a URL de conexao.")
+        return
+    allowed_text = st.session_state.get("db_tables") or ""
+    allowed = [name.strip() for name in allowed_text.split(",") if name.strip()]
+    try:
+        source = DatabaseSource(DatabaseConfig(url=url, allowed_tables=allowed))
+    except QueryError as exc:
+        st.error(f"Nao consegui conectar: {exc}")
+        return
+
+    schema = source.schema
+    if not schema.tables:
+        st.error("A conexao funcionou, mas nenhuma tabela foi encontrada.")
+        return
+
+    provider = _build_provider()
+    st.session_state.schema = schema
+    st.session_state.data = None
+    st.session_state.database = source
+    st.session_state.provider = provider
+    st.session_state.fewshots = _fewshots_for(schema, provider)
+    st.session_state.chat = (
+        ChatSession(provider, schema, source, st.session_state.fewshots)
+        if provider is not None
+        else None
+    )
+    st.session_state.source_label = f"Banco: {source.dialect} ({len(schema.tables)} tabelas)"
+    st.session_state.source_id = None
+    st.session_state.turns = []
+    if "src" in st.query_params:
+        del st.query_params["src"]
+    _flash("success", "Fonte ativa: banco de dados (somente leitura).")
+    st.rerun()
+
+
 def _render_data_tab() -> None:
     st.markdown("### Fonte de dados")
     st.caption("Uma fonte ativa por vez. Carregar uma nova substitui a atual.")
     mode = st.radio(
         "Como fornecer os dados?",
-        [SOURCE_SPREADSHEET, SOURCE_SCRIPT, SOURCE_EXAMPLE],
+        [SOURCE_SPREADSHEET, SOURCE_DATABASE, SOURCE_SCRIPT, SOURCE_EXAMPLE],
         key="source_mode",
         horizontal=True,
     )
 
-    if mode == SOURCE_SPREADSHEET:
+    if mode == SOURCE_DATABASE:
+        st.text_input(
+            "URL de conexao",
+            key="db_url",
+            placeholder="postgresql+psycopg://usuario_readonly:senha@localhost:5432/biblioteca",
+        )
+        st.caption(
+            "Use um usuario **somente-leitura**. A URL fica apenas nesta sessao "
+            "(nao e salva em disco)."
+        )
+        st.text_input(
+            "Tabelas permitidas (opcional, separadas por virgula)",
+            key="db_tables",
+            placeholder="livros, autores, emprestimos",
+        )
+        if st.button("Conectar e usar", key="connect_db", type="primary"):
+            _connect_database()
+    elif mode == SOURCE_SPREADSHEET:
         uploaded = st.file_uploader(
             "Arquivos (uma tabela por aba/arquivo)",
             type=["csv", "xlsx", "xls"],
@@ -459,7 +523,11 @@ def _render_source_preview() -> None:
     counts = _row_counts(schema, database, st.session_state.data)
     st.divider()
     st.markdown("**Previa dos dados**")
-    for table in schema.tables.values():
+    tables = list(schema.tables.values())
+    if st.session_state.data is None and len(tables) > PREVIEW_TABLES:
+        st.caption(f"Mostrando as primeiras {PREVIEW_TABLES} de {len(tables)} tabelas.")
+        tables = tables[:PREVIEW_TABLES]
+    for table in tables:
         if database is None:
             continue
         try:

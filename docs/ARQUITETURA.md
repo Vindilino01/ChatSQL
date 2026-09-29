@@ -66,8 +66,8 @@ A ideia e que qualquer integrante consiga ler e entender em ~20 minutos.
 (tabelas, colunas, tipos e FKs) e executar passando pela Trava no dialeto da fonte.
 Suporta SQLite (testes) e Postgres (demo). A seguranca e em camadas: usuario
 somente-leitura, sessao em modo leitura quando possivel, timeout por dialeto e a
-Trava bloqueando qualquer coisa que nao seja `SELECT`. A ligacao na tela e a
-frente C do `ROADMAP.md`.
+Trava bloqueando qualquer coisa que nao seja `SELECT`. A ligacao na tela ja existe
+na aba Dados (frente C evolui: MySQL, testar conexao e seletor de tabelas).
 
 ## 4. A Trava (seguranca)
 

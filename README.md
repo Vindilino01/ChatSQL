@@ -34,7 +34,7 @@ Voce escreve uma pergunta ("os 10 clientes que mais compraram no mes passado") e
 
 - **Planilha**: CSV, XLSX ou XLS (uma tabela por aba/arquivo).
 - **Script SQL**: `CREATE TABLE` (+ `INSERT INTO` para usar os seus dados).
-- **Conexao**: banco real somente-leitura (motor pronto para SQLite/Postgres; ligacao na tela no `ROADMAP.md`).
+- **Conexao**: banco real somente-leitura (Postgres/SQLite) direto na aba Dados.
 
 ## Como rodar (3 passos)
 
@@ -71,7 +71,8 @@ chat_sql/
   spreadsheet.py       Leitura de planilhas
   store.py             Persistencia de fontes e historico
   pipeline.py          Gerar -> validar -> executar
-  datasource.py        Interface de Fonte de Dados (base p/ Conexao)
+  datasource.py        Interface de Fonte de Dados
+  db.py                Conexao somente-leitura (SQLite/Postgres)
 schemas/               Schemas de exemplo
 exemplos/              Planilhas de exemplo
 tests/                 Testes (tambem servem de especificacao)
