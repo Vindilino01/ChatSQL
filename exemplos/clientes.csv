@@ -1,0 +1,5 @@
+id;nome;email;cidade;data_cadastro
+1;Ana Souza;ana@example.com;Sao Paulo;10/01/2025
+2;Bruno Lima;bruno@example.com;Rio de Janeiro;22/02/2025
+3;Carla Mendes;;Belo Horizonte;05/03/2025
+4;Diego Alves;diego@example.com;Curitiba;14/03/2025

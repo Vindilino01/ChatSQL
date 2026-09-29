@@ -1,0 +1,64 @@
+{
+  "e-commerce": [
+    {
+      "question": "Quantos clientes existem?",
+      "expected_sql": "SELECT COUNT(*) AS total FROM clientes;"
+    },
+    {
+      "question": "Liste os nomes de todos os clientes.",
+      "expected_sql": "SELECT nome FROM clientes;"
+    },
+    {
+      "question": "Qual o preco medio dos produtos?",
+      "expected_sql": "SELECT AVG(preco) AS media FROM produtos;"
+    },
+    {
+      "question": "Liste os produtos com estoque maior que 500.",
+      "expected_sql": "SELECT nome FROM produtos WHERE estoque > 500;"
+    },
+    {
+      "question": "Quantos pedidos foram feitos no ultimo mes?",
+      "expected_sql": "SELECT COUNT(*) AS total FROM pedidos WHERE data_pedido >= date('now', '-1 month');"
+    },
+    {
+      "question": "Quantos produtos existem por categoria?",
+      "expected_sql": "SELECT categoria_id, COUNT(*) AS total FROM produtos GROUP BY categoria_id;"
+    }
+  ],
+  "rh": [
+    {
+      "question": "Quantos funcionarios ativos existem?",
+      "expected_sql": "SELECT COUNT(*) AS total FROM funcionarios WHERE ativo = 1;"
+    },
+    {
+      "question": "Liste o nome de cada funcionario e o titulo do seu cargo.",
+      "expected_sql": "SELECT f.nome, c.titulo FROM funcionarios f JOIN cargos c ON f.cargo_id = c.id;"
+    },
+    {
+      "question": "Qual a media das notas de avaliacao de desempenho?",
+      "expected_sql": "SELECT AVG(nota) AS media FROM avaliacoes_desempenho;"
+    },
+    {
+      "question": "Quantos funcionarios existem por departamento?",
+      "expected_sql": "SELECT c.departamento_id, COUNT(*) AS total FROM funcionarios f JOIN cargos c ON f.cargo_id = c.id GROUP BY c.departamento_id;"
+    }
+  ],
+  "vendas": [
+    {
+      "question": "Qual o valor total de todas as vendas?",
+      "expected_sql": "SELECT SUM(valor_total) AS total FROM vendas;"
+    },
+    {
+      "question": "Quantas vendas foram feitas no ultimo mes?",
+      "expected_sql": "SELECT COUNT(*) AS total FROM vendas WHERE data_venda >= date('now', '-1 month');"
+    },
+    {
+      "question": "Quais os 10 maiores clientes por faturamento no mes passado?",
+      "expected_sql": "SELECT c.nome, SUM(v.valor_total) AS faturamento FROM clientes c JOIN vendas v ON c.id = v.cliente_id WHERE v.data_venda >= date('now', '-1 month') GROUP BY c.id, c.nome ORDER BY faturamento DESC LIMIT 10;"
+    },
+    {
+      "question": "Quantas vendas existem por representante?",
+      "expected_sql": "SELECT representante_id, COUNT(*) AS total FROM vendas GROUP BY representante_id;"
+    }
+  ]
+}

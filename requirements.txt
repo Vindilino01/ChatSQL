@@ -1,0 +1,8 @@
+streamlit>=1.40
+openai>=1.50
+sqlglot>=25.0
+pandas>=2.2
+Faker>=30.0
+openpyxl>=3.1
+xlrd>=2.0
+python-dotenv>=1.0
