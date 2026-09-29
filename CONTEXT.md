@@ -36,9 +36,21 @@ _Avoid_: Modo local, heurística, regex
 O serviço de modelo de linguagem escolhido pelo usuário, autenticado por uma chave de API fornecida por ele. É a alternativa opcional ao Motor Offline.
 _Avoid_: Modelo, LLM, API
 
+**Fonte de Dados**:
+A origem consultável de uma sessão: uma Planilha, um Script SQL ou uma Conexão.
+_Avoid_: Origem, input, dataset
+
 **Planilha**:
 Um arquivo CSV, XLSX ou XLS fornecido pelo usuário, do qual se infere um Schema da Sessão e se carregam dados reais.
 _Avoid_: Spreadsheet, arquivo, Excel
+
+**Instituição**:
+A organização que implanta o Chat SQL e fornece a Fonte de Dados.
+_Avoid_: Cliente, empresa, tenant
+
+**Conexão**:
+O acesso somente-leitura a um banco de dados real fornecido por uma Instituição.
+_Avoid_: Link, DSN, banco
 
 **Fonte Salva**:
 Uma Fonte de Dados persistida em disco e identificada por um hash do conteúdo, que pode ser reaberta depois.

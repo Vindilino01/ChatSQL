@@ -42,6 +42,11 @@ class InMemoryDatabase:
         self._conn.commit()
         self._conn.execute("PRAGMA query_only = ON")
 
+    @property
+    def schema(self) -> Schema:
+        """O Schema da Sessao desta Fonte de Dados (ver chat_sql/datasource.py)."""
+        return self._schema
+
     def _create_tables(self, ddl: str) -> None:
         try:
             self._conn.executescript(ddl)
