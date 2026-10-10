@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 class FakeProvider:
-    """Provedor de teste: devolve respostas pre-programadas, sem rede."""
+    """Provedor de teste: devolve respostas pré-programadas, sem rede."""
 
     def __init__(self, responses):
         self.responses = list(responses)

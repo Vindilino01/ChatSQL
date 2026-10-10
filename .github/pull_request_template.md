@@ -2,7 +2,7 @@
 
 (uma ou duas frases)
 
-## Por que
+## Por quê
 
 (qual problema resolve, qual tarefa do roadmap)
 
@@ -12,15 +12,15 @@
 - [ ] B. Motor Offline
 - [ ] C. Interface e Design
 - [ ] D. Dados e biblioteca
-- [ ] E. Entrega e apresentacao
+- [ ] E. Entrega e apresentação
 
 ## Checklist
 
-- [ ] Rodei `pytest` e esta verde.
+- [ ] Rodei `pytest` e está verde.
 - [ ] Criei/ativei um teste para o que mudei.
-- [ ] Atualizei a documentacao (guia da frente, `ROADMAP.md` ou `PRD.md`) se precisava.
-- [ ] Peco revisao de outra pessoa do grupo.
+- [ ] Atualizei a documentação (guia da frente, `ROADMAP.md` ou `PRD.md`) se precisava.
+- [ ] Peço revisão de outra pessoa do grupo.
 
-## Print (se for mudanca visual)
+## Print (se for mudança visual)
 
 (cole aqui a imagem da tela, se fizer sentido)

@@ -1,7 +1,7 @@
 """Cliente de Provedor OpenAI-compatible.
 
 Cobre DeepSeek, OpenAI, Groq, OpenRouter, Together e servidores locais. A chave
-vive apenas na sessao do usuario; nada e persistido aqui.
+vive apenas na sessão do usuário; nada é persistido aqui.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ class ProviderError(Exception):
 
 
 class AuthError(ProviderError):
-    """Chave invalida ou acesso negado."""
+    """Chave inválida ou acesso negado."""
 
 
 class RateLimitError(ProviderError):
@@ -39,13 +39,13 @@ def _translate(exc: Exception) -> ProviderError:
     except ImportError:
         return ProviderError(str(exc))
     if isinstance(exc, openai.AuthenticationError):
-        return AuthError("Chave de API invalida ou nao autorizada.")
+        return AuthError("Chave de API inválida ou não autorizada.")
     if isinstance(exc, openai.PermissionDeniedError):
         return AuthError("Acesso negado pelo Provedor.")
     if isinstance(exc, openai.RateLimitError):
         return RateLimitError("Limite de requisicoes atingido. Tente novamente em instantes.")
     if isinstance(exc, (openai.APIConnectionError, openai.APITimeoutError)):
-        return NetworkError("Nao foi possivel conectar ao Provedor (rede ou timeout).")
+        return NetworkError("Não foi possível conectar ao Provedor (rede ou timeout).")
     return ProviderError(str(exc))
 
 
@@ -68,7 +68,7 @@ class OpenAICompatibleProvider:
             try:
                 from openai import OpenAI
             except ImportError as exc:
-                raise ProviderError("Pacote 'openai' nao instalado.") from exc
+                raise ProviderError("Pacote 'openai' não instalado.") from exc
             self._client = OpenAI(
                 api_key=self.api_key or "not-needed",
                 base_url=self.base_url,
@@ -92,7 +92,7 @@ class OpenAICompatibleProvider:
         except Exception as exc:
             raise _translate(exc) from exc
         if not response.choices:
-            raise ProviderError("O Provedor nao retornou nenhuma resposta.")
+            raise ProviderError("O Provedor não retornou nenhuma resposta.")
         return response.choices[0].message.content or ""
 
     def test_connection(self) -> None:

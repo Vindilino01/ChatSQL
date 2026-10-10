@@ -1,7 +1,7 @@
-"""Persistencia das fontes de dados em disco.
+"""Persistência das fontes de dados em disco.
 
 As fontes ficam em `~/.chat_sql_sources/<id>/` e sobrevivem a reloads e a
-reinicios do servidor. O conteudo e identificado por hash, entao reenviar o
+reinícios do servidor. O conteúdo é identificado por hash, então reenviar o
 mesmo arquivo reutiliza a mesma fonte.
 """
 

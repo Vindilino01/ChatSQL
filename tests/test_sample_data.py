@@ -25,7 +25,7 @@ def _rows_for(data, name: str):
     for table_name, rows in data.rows.items():
         if table_name.lower() == name.lower():
             return rows
-    raise AssertionError(f"Tabela {name} nao encontrada nos dados gerados.")
+    raise AssertionError(f"Tabela {name} não encontrada nos dados gerados.")
 
 
 def test_foreign_key_integrity(schema, data):

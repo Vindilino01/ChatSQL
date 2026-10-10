@@ -1,7 +1,7 @@
-"""Motor Offline: analise de perguntas em PT-BR e geracao de Consultas SQL.
+"""Motor Offline: análise de perguntas em PT-BR e geração de Consultas SQL.
 
-Nunca lanca excecao: qualquer falha vira um OfflineResult com `error` e
-`suggestions`. Quando ha mais de uma interpretacao plausivel, devolve
+Nunca lança exceção: qualquer falha vira um OfflineResult com `error` e
+`suggestions`. Quando há mais de uma interpretação plausível, devolve
 `ambiguous` em vez de escolher no escuro.
 """
 
@@ -62,7 +62,7 @@ def _explain_plan(plan: Plan) -> str:
     action = {
         "count": "Contei os registros",
         "sum": f"Soma de {measure}" if measure else "Soma",
-        "avg": f"Media de {measure}" if measure else "Media",
+        "avg": f"Média de {measure}" if measure else "Média",
         "max": f"Maior {measure}" if measure else "Maior valor",
         "min": f"Menor {measure}" if measure else "Menor valor",
         "list": "Listei os registros",
@@ -592,12 +592,12 @@ def suggest_questions(schema: Schema, limit: int = 6) -> list[str]:
             suggestions.append(f"Total de {numeric[0].name} por {text_columns[0].name}")
         if date_column:
             suggestions.append(
-                "Quantos registros no mes passado?" if single else f"Quantos {table.name} no mes passado?"
+                "Quantos registros no mês passado?" if single else f"Quantos {table.name} no mês passado?"
             )
             suggestions.append(
-                "Qual foi o ultimo registro?"
+                "Qual foi o último registro?"
                 if single
-                else f"Qual foi o ultimo registro de {table.name}?"
+                else f"Qual foi o último registro de {table.name}?"
             )
     seen: set[str] = set()
     unique: list[str] = []
@@ -632,7 +632,7 @@ class OfflineEngine:
         return None
 
     def generate(self, messages, *, temperature: float = 0.0) -> str:  # pragma: no cover
-        raise NotImplementedError("O motor offline nao usa mensagens.")
+        raise NotImplementedError("O motor offline não usa mensagens.")
 
     def generate_sql(self, question: str, schema: Schema) -> str | None:
         result = self.analyze(question, schema)
@@ -655,7 +655,7 @@ class OfflineEngine:
     def _analyze(self, question: str, schema: Schema) -> OfflineResult:
         q = normalize(question)
         if not q:
-            return OfflineResult(None, {}, 0.0, "A pergunta esta vazia.", self._suggestions(schema))
+            return OfflineResult(None, {}, 0.0, "A pergunta está vazia.", self._suggestions(schema))
 
         subject, ambiguous = _find_subject(schema, q)
         if subject is None:
@@ -663,7 +663,7 @@ class OfflineEngine:
                 None,
                 {},
                 0.0,
-                "Nao identifiquei sobre qual tabela a pergunta e.",
+                "Não identifiquei sobre qual tabela a pergunta é.",
                 self._suggestions(schema),
             )
         if ambiguous:
@@ -672,7 +672,7 @@ class OfflineEngine:
                 None,
                 {"tabela": subject.name},
                 0.4,
-                f"A pergunta pode ser sobre mais de uma tabela: {', '.join(options)}. Seja mais especifico.",
+                f"A pergunta pode ser sobre mais de uma tabela: {', '.join(options)}. Seja mais específico.",
                 self._suggestions(schema),
                 ambiguous=options,
             )
@@ -748,7 +748,7 @@ class OfflineEngine:
                 None,
                 self._understood(plan),
                 0.3,
-                "Nao consegui montar uma Consulta valida para essa pergunta.",
+                "Não consegui montar uma Consulta válida para essa pergunta.",
                 self._suggestions(schema),
             )
         return OfflineResult(

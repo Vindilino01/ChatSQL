@@ -1,4 +1,4 @@
-"""Montagem de SQL com resolucao de junções por BFS no grafo de FKs."""
+"""Montagem de SQL com resolução de junções por BFS no grafo de FKs."""
 
 from __future__ import annotations
 

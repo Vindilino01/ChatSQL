@@ -8,7 +8,7 @@ assignees: ''
 
 ## O que precisa ser feito
 
-Descreva em **uma frase** o que voce vai fazer.
+Descreva em **uma frase** o que você vai fazer.
 
 ## Frente
 
@@ -16,18 +16,18 @@ Descreva em **uma frase** o que voce vai fazer.
 - [ ] B. Motor Offline
 - [ ] C. Interface e Design
 - [ ] D. Dados e biblioteca
-- [ ] E. Entrega e apresentacao
+- [ ] E. Entrega e apresentação
 
 ## Onde provavelmente vou mexer
 
 Arquivos:
 
-## Como vou saber que terminei (criterio de aceite)
+## Como vou saber que terminei (critério de aceite)
 
 - [ ] `pytest` continua verde.
 - [ ] Tem teste novo (ou o teste-guia foi ativado).
 - [ ] Atualizei o guia da frente ou o `ROADMAP.md`, se mudou o combinado.
 
-## Duvidas
+## Dúvidas
 
 (escreva aqui se estiver travado)

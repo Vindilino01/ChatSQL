@@ -1,8 +1,8 @@
-"""Parse e normalizacao do Schema da Sessao a partir de CREATE TABLE.
+"""Parse e normalização do Schema da Sessão a partir de CREATE TABLE.
 
 Usa sqlglot para extrair tabelas, colunas, tipos e chaves estrangeiras. O DDL
-normalizado e o que entra no prompt; o DDL cru e o que cria as tabelas no
-SQLite (preserva AUTOINCREMENT e tipos exoticos).
+normalizado é o que entra no prompt; o DDL cru é o que cria as tabelas no
+SQLite (preserva AUTOINCREMENT e tipos exóticos).
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from sqlglot.errors import ParseError
 
 
 class SchemaError(Exception):
-    """DDL invalido ou sem nenhum CREATE TABLE."""
+    """DDL inválido ou sem nenhum CREATE TABLE."""
 
 
 @dataclass(frozen=True)
@@ -202,14 +202,14 @@ def _parse_table(stmt: exp.Create) -> Table:
 
 
 def parse_schema(ddl: str) -> Schema:
-    """Converte um DDL em um Schema. Levanta SchemaError se invalido."""
+    """Converte um DDL em um Schema. Levanta SchemaError se inválido."""
     if not ddl or not ddl.strip():
-        raise SchemaError("O DDL esta vazio.")
+        raise SchemaError("O DDL está vazio.")
 
     try:
         statements = sqlglot.parse(ddl, read="sqlite")
     except ParseError as exc:
-        raise SchemaError(f"DDL invalido: {exc}") from exc
+        raise SchemaError(f"DDL inválido: {exc}") from exc
 
     tables: dict[str, Table] = {}
     normalized: list[str] = []

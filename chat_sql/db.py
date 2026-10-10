@@ -1,22 +1,22 @@
-"""Conector somente-leitura para bancos reais.
+"""Conector somente leitura para bancos reais.
 
-Implementacao de referencia (Fase 1 do ROADMAP.md). Cobre **SQLite** (usado nos
-testes) e **Postgres** (SGBD da demonstracao). Evolucoes ficam com o grupo:
-MySQL, mais dialetos, seletor de tabelas na UI e teste de conexao.
+Implementação de referência (Fase 1 do ROADMAP.md). Cobre **SQLite** (usado nos
+testes) e **Postgres** (SGBD da demonstração). Evoluções ficam com o grupo:
+MySQL, mais dialetos, seletor de tabelas na tela e teste de conexão.
 
 Como funciona
 -------------
 1. `DatabaseSource` abre uma engine SQLAlchemy a partir da URL fornecida.
 2. Introspecta o schema (tabelas, colunas, tipos e FKs) e monta um `Schema`.
 3. Em `execute()`, a Consulta passa pela Trava (`guard.validate`, no dialeto da
-   fonte) e so entao e executada, com limite de tempo e de linhas.
+   fonte) e só então é executada, com limite de tempo e de linhas.
 
-Seguranca (obrigatorio)
+Segurança (obrigatório)
 -----------------------
-- Use um usuario de banco **somente-leitura**.
-- A Trava bloqueia DDL/DML, mas nao confie apenas nela: o usuario read-only e a
-  ultima linha de defesa.
-- Sessao em modo leitura quando o dialeto permite; timeout por dialeto.
+- Use um usuário de banco **somente leitura**.
+- A Trava bloqueia DDL/DML, mas não confie apenas nela: o usuário read-only é a
+  última linha de defesa.
+- Sessão em modo leitura quando o dialeto permite; timeout por dialeto.
 """
 
 from __future__ import annotations
@@ -53,7 +53,7 @@ def _canonical_type(sa_type) -> str:
 
 
 def _introspect(engine: Engine, schema_name: str | None = None) -> Schema:
-    """Le o banco e monta o Schema da Sessao (tabelas, colunas e FKs)."""
+    """Lê o banco e monta o Schema da Sessão (tabelas, colunas e FKs)."""
     inspector = inspect(engine)
     tables: dict[str, Table] = {}
     ddl_parts: list[str] = []
@@ -103,7 +103,7 @@ _SQLGLOT_DIALECT = {"postgresql": "postgres", "mysql": "mysql", "sqlite": "sqlit
 
 @dataclass
 class DatabaseConfig:
-    """Dados de conexao informados pela Instituicao."""
+    """Dados de conexão informados pela Instituição."""
 
     url: str
     schema_name: str | None = None
@@ -120,7 +120,7 @@ class DatabaseSource:
             with self._engine.connect() as connection:
                 connection.exec_driver_sql("SELECT 1")
         except SQLAlchemyError as exc:
-            raise QueryError(f"Nao foi possivel conectar ao banco: {exc}") from exc
+            raise QueryError(f"Não foi possível conectar ao banco: {exc}") from exc
 
         schema = _introspect(self._engine, config.schema_name)
         if config.allowed_tables:
@@ -155,7 +155,7 @@ class DatabaseSource:
             elif self.dialect == "sqlite":
                 connection.exec_driver_sql("PRAGMA query_only = ON")
         except SQLAlchemyError:
-            # Dialetos podem nao suportar; a Trava e o usuario read-only continuam valendo.
+            # Dialetos podem não suportar; a Trava e o usuário read-only continuam valendo.
             pass
 
     def execute(

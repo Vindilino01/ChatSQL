@@ -1,6 +1,6 @@
-"""Harness de Avaliacao: mede a acuracia das Consultas contra resultados esperados.
+"""Harness de Avaliação: mede a acurácia das Consultas contra resultados esperados.
 
-Nao roda por padrao (precisa de um Provedor real). Para rodar:
+Não roda por padrão (precisa de um Provedor real). Para rodar:
 
     $env:CHATSQL_EVAL_API_KEY = "sk-..."
     $env:CHATSQL_EVAL_BASE_URL = "https://api.deepseek.com/v1"   # opcional
@@ -84,7 +84,7 @@ def test_acuracia():
                 failures.append(f"[{schema_name}] {case['question']} -> {detail}")
 
     accuracy = passed / total if total else 0.0
-    print(f"\nAcuracia: {passed}/{total} = {accuracy:.0%}")
+    print(f"\nAcurácia: {passed}/{total} = {accuracy:.0%}")
     for failure in failures:
         print("  FALHA:", failure)
 

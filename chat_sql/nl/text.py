@@ -1,4 +1,4 @@
-"""Normalizacao de texto em PT-BR."""
+"""Normalização de texto em PT-BR."""
 
 from __future__ import annotations
 

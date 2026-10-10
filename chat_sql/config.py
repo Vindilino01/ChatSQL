@@ -1,4 +1,4 @@
-"""Configuracao central: presets de Provedor e limites do app."""
+"""Configuração central: presets de Provedor e limites do app."""
 
 from __future__ import annotations
 
@@ -25,13 +25,13 @@ PROVIDER_PRESETS: dict[str, ProviderPreset] = {
 
 OFFLINE_PROVIDER = "Modo offline (sem IA)"
 
-# Offline e o padrao; a IA e a ultima alternativa (opcional, com chave).
+# Offline é o padrão; a IA é a última alternativa (opcional, com chave).
 DEFAULT_PROVIDER = OFFLINE_PROVIDER
 
-# Orcamento de Tentativas: 1 geracao inicial + 2 Correcoes.
+# Orçamento de Tentativas: 1 geração inicial + 2 Correções.
 MAX_ATTEMPTS = 3
 
-# Parametros de geracao.
+# Parâmetros de geração.
 DEFAULT_TEMPERATURE = 0.0
 REQUEST_TIMEOUT_SECONDS = 60.0
 
@@ -40,7 +40,7 @@ SAMPLE_ROWS_DEFAULT = 50
 SAMPLE_ROWS_MIN = 10
 SAMPLE_ROWS_MAX = 500
 
-# Limites de execucao.
+# Limites de execução.
 MAX_FETCH_ROWS = 1000
 DISPLAY_ROWS = 200
 QUERY_TIMEOUT_SECONDS = 5.0

@@ -1,47 +1,64 @@
 # PRD — Chat SQL
 
-**Projeto A3 — Chatbot de consultas em linguagem natural para qualquer instituicao**
+**Projeto A3 — Chatbot de consultas em linguagem natural para qualquer instituição**
 **Metodologia:** pesquisa aplicada + desenvolvimento incremental
-**Status:** `conexao a banco (SQLite/Postgres) + fundacao` — features do roadmap em desenvolvimento
+**Status:** `conexão a banco (SQLite/Postgres) + fundação` — features do roadmap em desenvolvimento
+
+[Início](README.md) · [Índice da documentação](docs/README.md) · [Roadmap](ROADMAP.md)
 
 ---
 
-## 1. Visao Geral
+## Sumário
 
-O Chat SQL e um **servico** que permite a qualquer instituicao consultar os seus dados
-escrevendo perguntas em portugues. O sistema traduz a pergunta para **SQL somente leitura**,
-valida esse SQL com uma camada de seguranca (a **Trava**) e o executa, mostrando o resultado.
+1. [Visão geral](#1-visão-geral)
+2. [Objetivos](#2-objetivos)
+3. [Arquitetura](#3-arquitetura)
+4. [Segurança](#4-segurança)
+5. [Stack](#5-stack)
+6. [Estrutura do repositório](#6-estrutura-do-repositório)
+7. [Como executar](#7-como-executar)
+8. [Resultados](#8-resultados)
+9. [Fundamentação](#9-fundamentação)
+10. [Limitações e trabalhos futuros](#10-limitações-e-trabalhos-futuros)
 
-O diferencial e funcionar **sem IA**: um motor de regras deterministico resolve as perguntas
-mais comuns, sem enviar dados para fora e sem custo por token. Se a instituicao quiser mais
+---
+
+## 1. Visão geral
+
+O Chat SQL é um **serviço** que permite a qualquer instituição consultar os seus dados
+escrevendo perguntas em português. O sistema traduz a pergunta para **SQL somente leitura**,
+valida esse SQL com uma camada de segurança (a **Trava**) e o executa, mostrando o resultado.
+
+O diferencial é funcionar **sem IA**: um motor de regras determinístico resolve as perguntas
+mais comuns, sem enviar dados para fora e sem custo por token. Se a instituição quiser mais
 flexibilidade, pode **opcionalmente** configurar uma chave de API de um provedor de IA.
 
 ### Problema que resolve
 
 | Problema | Como o Chat SQL resolve |
 |----------|-------------------------|
-| Pessoas nao tecnicas nao sabem SQL | Perguntas em portugues viram SQL |
-| Medo de a IA "inventar" ou apagar dados | A Trava so permite `SELECT`; nada e executado sem revisao |
-| Instituicoes que proibem IA | Motor Offline deterministico, sem rede |
-| Dados presos em planilhas ou bancos | Planilha, script SQL ou Conexao read-only |
+| Pessoas não técnicas não sabem SQL | Perguntas em português viram SQL |
+| Medo de a IA "inventar" ou apagar dados | A Trava só permite `SELECT`; nada é executado sem revisão |
+| Instituições que proíbem IA | Motor Offline determinístico, sem rede |
+| Dados presos em planilhas ou bancos | Planilha, script SQL ou Conexão read-only |
 
 ---
 
 ## 2. Objetivos
 
 - Traduzir perguntas em PT-BR para SQL somente leitura.
-- Garantir seguranca por camadas (Trava + modo leitura + limites).
-- Funcionar **sem IA**, com meta mensuravel de acuracia.
-- Aceitar planilhas, scripts SQL e (roadmap) conexoes a bancos reais.
-- Ser facil de entender e evoluir (projeto de aprendizado, 7 integrantes).
+- Garantir segurança por camadas (Trava + modo leitura + limites).
+- Funcionar **sem IA**, com meta mensurável de acurácia.
+- Aceitar planilhas, scripts SQL e conexões a bancos reais.
+- Ser fácil de entender e evoluir (projeto de aprendizado, 7 integrantes).
 
-### Metas mensuraveis
+### Metas mensuráveis
 
 | Meta | Valor alvo |
 |------|------------|
-| Acuracia do Motor Offline | **>= 70%** em ~15-20 perguntas por schema |
+| Acurácia do Motor Offline | **>= 70%** em ~15-20 perguntas por schema |
 | Escrita em banco bloqueada | 100% (testes de bloqueio) |
-| Instalacao local | <= 3 comandos |
+| Instalação local | <= 3 comandos |
 
 ---
 
@@ -49,46 +66,46 @@ flexibilidade, pode **opcionalmente** configurar uma chave de API de um provedor
 
 ```
  Pergunta (PT-BR)
-       │
-       ▼
- ┌───────────────┐   sem chave    ┌──────────────────┐
- │   Motor       │◄──────────────►│  Regras + sinon. │
- │  Offline      │                └──────────────────┘
- └──────┬────────┘
-        │  com chave (opcional)
-        ▼
- ┌───────────────┐
- │  Provedor IA  │  (OpenAI-compatible)
- └──────┬────────┘
-        │  Consulta SQL
-        ▼
- ┌───────────────┐     rejeita DDL/DML, coluna inexistente
- │     Trava     │───────────────────────────────────────┐
- └──────┬────────┘                                       │
-        │ aprovada                                       ▼
-        ▼                                          Diagnostico
- ┌───────────────┐
- │  Fonte de     │  SQLite em memoria  |  Banco real (roadmap)
- │  Dados        │
- └──────┬────────┘
-        ▼
-   Resultado (tabela + grafico)
+       |
+       v
+ +---------------+   sem chave    +------------------+
+ |   Motor       |<-------------->|  Regras + sinôn. |
+ |  Offline      |                +------------------+
+ +-------+-------+
+         |  com chave (opcional)
+         v
+ +---------------+
+ |  Provedor IA  |  (OpenAI-compatible)
+ +-------+-------+
+         |  Consulta SQL
+         v
+ +---------------+     rejeita DDL/DML, coluna inexistente
+ |     Trava     |---------------------------------------+
+ +-------+-------+                                       |
+         | aprovada                                        v
+         v                                          Diagnóstico
+ +---------------+
+ |  Fonte de     |  SQLite na memória  |  Banco real
+ |  Dados        |
+ +-------+-------+
+         v
+   Resultado (tabela + gráfico)
 ```
 
-Detalhamento de cada modulo em [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md).
+Detalhamento de cada módulo em [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md).
 
 ---
 
-## 4. Seguranca
+## 4. Segurança
 
-A seguranca e em camadas (ver ADRs 0001 e 0008):
+A segurança é em camadas (ver ADRs 0001 e 0008):
 
-1. **Trava** (`chat_sql/guard.py`): uma unica instrucao, apenas `SELECT`, sem funcoes
+1. **Trava** (`chat_sql/guard.py`): uma única instrução, apenas `SELECT`, sem funções
    perigosas e apenas tabelas/colunas que existem.
-2. **Revisao humana**: o SQL aparece na tela e so executa no clique.
-3. **Somente leitura**: no modo memoria, `PRAGMA query_only`; no modo Conexao, usuario
-   read-only + sessao em modo leitura.
-4. **Limites**: tempo de consulta, numero de linhas e tabelas permitidas.
+2. **Revisão humana**: o SQL aparece na tela e só executa no clique.
+3. **Somente leitura**: no modo memória, `PRAGMA query_only`; no modo Conexão, usuário
+   read-only + sessão em modo leitura.
+4. **Limites**: tempo de consulta, número de linhas e tabelas permitidas.
 
 ---
 
@@ -98,42 +115,42 @@ A seguranca e em camadas (ver ADRs 0001 e 0008):
 |------------|-------|
 | Python 3.11+ | Linguagem principal |
 | Streamlit | Interface web |
-| sqlglot | Parse e validacao do SQL (a Trava) |
+| sqlglot | Parse e validação do SQL (a Trava) |
 | pandas | Planilhas e resultados |
-| SQLite | Execucao em memoria |
-| Faker | Dados de exemplo deterministicos |
+| SQLite | Execução na memória |
+| Faker | Dados de exemplo determinísticos |
 | openpyxl / xlrd | Leitura de Excel |
-| SQLAlchemy + psycopg | Conexao a bancos reais (Postgres/SQLite) |
+| SQLAlchemy + psycopg | Conexão a bancos reais (Postgres/SQLite) |
 | openai | Provedor de IA opcional |
 
 ---
 
-## 6. Estrutura do Repositorio
+## 6. Estrutura do repositório
 
 ```
 ChatSQL/
-├── README.md              # comecar por aqui
+├── README.md              # comece por aqui
 ├── PRD.md                 # este documento
 ├── ROADMAP.md             # o que falta e quem faz
 ├── CONTRIBUTING.md        # como contribuir
 ├── app.py                 # interface Streamlit
-├── chat_sql/              # codigo do produto
+├── chat_sql/              # código do produto
 │   ├── nl/                # Motor Offline (regras PT-BR)
 │   ├── guard.py           # a Trava
-│   ├── engine.py          # SQLite em memoria
+│   ├── engine.py          # SQLite na memória
 │   ├── spreadsheet.py     # planilhas
-│   ├── store.py           # persistencia
+│   ├── store.py           # persistência
 │   ├── datasource.py      # interface de Fonte de Dados
-│   └── db.py / sheets.py / sql_dump.py   # esqueletos do roadmap
-├── schemas/               # schemas de exemplo
+│   └── db.py / sheets.py / sql_dump.py   # conexões e importadores
+├── schemas/               # schemas de exemplo e da biblioteca
 ├── exemplos/              # planilhas de exemplo
-├── tests/                 # testes (especificacao executavel)
-└── docs/                  # arquitetura e ADRs
+├── tests/                 # testes (especificação executável)
+└── docs/                  # arquitetura, guias e ADRs
 ```
 
 ---
 
-## 7. Como Executar
+## 7. Como executar
 
 ```bash
 python -m venv venv
@@ -153,40 +170,44 @@ pytest
 
 ## 8. Resultados
 
-> Preencher conforme o roadmap avanca (semana 5).
+> Preencher conforme o roadmap avança (semana 5).
 
-| Metrica | Valor |
+| Métrica | Valor |
 |---------|-------|
-| Acuracia do Motor Offline (biblioteca) | a medir |
-| Acuracia do Motor Offline (e-commerce) | a medir |
-| Perguntas de avaliacao | a definir (15-20 por schema) |
+| Acurácia do Motor Offline (biblioteca) | a medir |
+| Acurácia do Motor Offline (e-commerce) | a medir |
+| Perguntas de avaliação | a definir (15-20 por schema) |
 | Testes automatizados | 133 + 6 guias desativados |
 
 ---
 
-## 9. Fundamentacao
+## 9. Fundamentação
 
-- **Text-to-SQL**: transformar linguagem natural em consultas e um problema classico de
-  PLN; abordagens por regras precedem os modelos neurais e ainda sao uteis por serem
-  deterministicas e auditaveis.
-- **Seguranca por allowlist**: validar a intencao (apenas leitura) e mais seguro do que
+- **Text-to-SQL**: transformar linguagem natural em consultas é um problema clássico de
+  PLN; abordagens por regras precedem os modelos neurais e ainda são úteis por serem
+  determinísticas e auditáveis.
+- **Segurança por allowlist**: validar a intenção (apenas leitura) é mais seguro do que
   tentar bloquear comandos proibidos um a um.
-- **Engenharia de confiabilidade**: mostrar a consulta antes de executar aumenta a confianca
-  do usuario e reduz o risco de resultados errados passarem despercebidos.
+- **Engenharia de confiabilidade**: mostrar a consulta antes de executar aumenta a confiança
+  do usuário e reduz o risco de resultados errados passarem despercebidos.
 
 ---
 
-## 10. Limitacoes e Trabalhos Futuros
+## 10. Limitações e trabalhos futuros
 
-- O Motor Offline cobre um **vocabulario controlado**; perguntas fora dele retornam
-  "nao entendi" (por design).
-- Sem login e sem multi-tenant nesta fase (uma instancia por instituicao).
-- Conexao a banco real ja funciona na tela (SQLite/Postgres); faltam MySQL, botao
-  de testar conexao e seletor visual de tabelas. Google Sheets e dump `.sql` estao
+- O Motor Offline cobre um **vocabulário controlado**; perguntas fora dele retornam
+  "não entendi" (por design).
+- Sem login e sem multi-tenant nesta fase (uma instância por instituição).
+- Conexão a banco real já funciona na tela (SQLite/Postgres); faltam MySQL, botão
+  de testar conexão e seletor visual de tabelas. Google Sheets e dump `.sql` estão
   no `ROADMAP.md`.
-- Evolucoes possiveis: ajuste de tipos de coluna na planilha, joins manuais entre arquivos,
-  multiusuario, suporte a mais dialetos (SQL Server, Oracle).
+- Evoluções possíveis: ajuste de tipos de coluna na planilha, joins manuais entre arquivos,
+  multiusuário, suporte a mais dialetos (SQL Server, Oracle).
 
 ---
 
 *Projeto A3 — Chat SQL*
+
+---
+
+[Início](README.md) · [Índice da documentação](docs/README.md) · [Roadmap](ROADMAP.md)

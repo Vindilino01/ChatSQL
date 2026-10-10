@@ -1,7 +1,7 @@
 """Chat SQL - interface Streamlit.
 
-Uma fonte de dados ativa por vez. O SQL gerado e sempre exibido antes da
-execucao. O Motor Offline e o padrao; um Provedor de IA e opcional.
+Uma fonte de dados ativa por vez. O SQL gerado é sempre exibido antes da
+execução. O Motor Offline é o padrão; um Provedor de IA é opcional.
 """
 
 from __future__ import annotations
@@ -187,7 +187,7 @@ def _flash(kind: str, message: str) -> None:
 @st.cache_data(show_spinner=False)
 def _build_payload(source_id: str) -> dict | None:
     """Monta schema e dados a partir da fonte salva em disco. Fica em cache
-    (sobrevive a reloads); o banco em memoria e recriado por sessao."""
+    (sobrevive a reloads); o banco na memória é recriado por sessão."""
     meta = store.read_source(source_id)
     if meta is None:
         return None
@@ -217,11 +217,11 @@ def _activate_source(source_id: str, announce: bool = True) -> bool:
     try:
         payload = _build_payload(source_id)
     except Exception as exc:
-        st.error(f"Nao consegui ler os dados: {exc}")
+        st.error(f"Não consegui ler os dados: {exc}")
         return False
     if payload is None:
         if announce:
-            st.warning("A fonte salva nao foi encontrada. Carregue os dados novamente.")
+            st.warning("A fonte salva não foi encontrada. Carregue os dados novamente.")
         return False
 
     schema = payload["schema"]
@@ -321,7 +321,7 @@ def _load_spreadsheets(uploaded) -> None:
     try:
         source_id = store.save_uploaded(files)
     except Exception as exc:
-        st.error(f"Nao consegui salvar as planilhas: {exc}")
+        st.error(f"Não consegui salvar as planilhas: {exc}")
         return
     if _activate_source(source_id):
         _flash("success", f"Fonte ativa: planilhas ({len(files)} arquivo(s)).")
@@ -333,7 +333,7 @@ def _load_script() -> None:
     try:
         schema = parse_schema(text)
     except SchemaError as exc:
-        st.error(f"Script invalido: {exc}")
+        st.error(f"Script inválido: {exc}")
         return
     has_inserts = re.search(r"\binsert\s+into\b", text, re.IGNORECASE) is not None
     suffix = "seus dados" if has_inserts else "exemplo"
@@ -350,7 +350,7 @@ def _load_example() -> None:
     name = st.session_state.example_preset
     path = SCHEMAS_DIR / f"{name}.sql"
     if not path.exists():
-        st.error(f"Schema de exemplo nao encontrado: {name}")
+        st.error(f"Schema de exemplo não encontrado: {name}")
         return
     text = path.read_text(encoding="utf-8")
     source_id = store.save_text(
@@ -421,19 +421,19 @@ def _render_sidebar() -> None:
 def _connect_database() -> None:
     url = (st.session_state.get("db_url") or "").strip()
     if not url:
-        st.warning("Informe a URL de conexao.")
+        st.warning("Informe a URL de conexão.")
         return
     allowed_text = st.session_state.get("db_tables") or ""
     allowed = [name.strip() for name in allowed_text.split(",") if name.strip()]
     try:
         source = DatabaseSource(DatabaseConfig(url=url, allowed_tables=allowed))
     except QueryError as exc:
-        st.error(f"Nao consegui conectar: {exc}")
+        st.error(f"Não consegui conectar: {exc}")
         return
 
     schema = source.schema
     if not schema.tables:
-        st.error("A conexao funcionou, mas nenhuma tabela foi encontrada.")
+        st.error("A conexão funcionou, mas nenhuma tabela foi encontrada.")
         return
 
     provider = _build_provider()
@@ -468,16 +468,16 @@ def _render_data_tab() -> None:
 
     if mode == SOURCE_DATABASE:
         st.text_input(
-            "URL de conexao",
+            "URL de conexão",
             key="db_url",
             placeholder="postgresql+psycopg://usuario_readonly:senha@localhost:5432/biblioteca",
         )
         st.caption(
-            "Use um usuario **somente-leitura**. A URL fica apenas nesta sessao "
-            "(nao e salva em disco)."
+            "Use um usuário **somente leitura**. A URL fica apenas nesta sessão "
+            "(não é salva em disco)."
         )
         st.text_input(
-            "Tabelas permitidas (opcional, separadas por virgula)",
+            "Tabelas permitidas (opcional, separadas por vírgula)",
             key="db_tables",
             placeholder="livros, autores, emprestimos",
         )
@@ -522,7 +522,7 @@ def _render_source_preview() -> None:
     database = st.session_state.database
     counts = _row_counts(schema, database, st.session_state.data)
     st.divider()
-    st.markdown("**Previa dos dados**")
+    st.markdown("**Prévia dos dados**")
     tables = list(schema.tables.values())
     if st.session_state.data is None and len(tables) > PREVIEW_TABLES:
         st.caption(f"Mostrando as primeiras {PREVIEW_TABLES} de {len(tables)} tabelas.")
@@ -542,7 +542,7 @@ def _render_source_preview() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Aba Configuracoes
+# Aba Configurações
 # ---------------------------------------------------------------------------
 
 
@@ -562,9 +562,9 @@ def _render_config_tab() -> None:
             "Chave de API",
             key="api_key",
             type="password",
-            help="Fica apenas nesta sessao. Nunca e salva nem registrada.",
+            help="Fica apenas nesta sessão. Nunca é salva nem registrada.",
         )
-        if st.button("Testar conexao", key="test_connection"):
+        if st.button("Testar conexão", key="test_connection"):
             provider = _build_provider()
             if provider is None:
                 st.warning("Informe a chave de API.")
@@ -672,7 +672,7 @@ def _render_suggestions(schema: Schema) -> None:
     suggestions = suggest_questions(schema)
     if not suggestions:
         return
-    st.caption("Sugestoes — clique para perguntar:")
+    st.caption("Sugestões — clique para perguntar:")
     for start in range(0, len(suggestions), 3):
         row = suggestions[start : start + 3]
         columns = st.columns(3)
@@ -699,7 +699,7 @@ def _render_recent() -> None:
 def _render_result(turn: dict, index: int) -> None:
     frame = pd.DataFrame(turn["rows"], columns=turn["columns"])
     if frame.empty:
-        st.info("A Consulta rodou sem erros, mas nao retornou nenhuma linha.")
+        st.info("A Consulta rodou sem erros, mas não retornou nenhuma linha.")
         return
     metrics = st.columns(3)
     metrics[0].metric("Linhas", len(frame))
@@ -714,7 +714,7 @@ def _render_result(turn: dict, index: int) -> None:
     )
     if numeric:
         chart = st.selectbox(
-            "Grafico", ["Barra", "Linha", "Area", "Nenhum"], key=f"chart_{index}"
+            "Gráfico", ["Barra", "Linha", "Área", "Nenhum"], key=f"chart_{index}"
         )
         if chart == "Barra":
             st.bar_chart(frame, x=frame.columns[0], y=frame.columns[1], height=280)
@@ -750,7 +750,7 @@ def _render_turn(turn: dict, index: int, is_last: bool) -> None:
         f'<div class="chs-user">{html.escape(turn["question"])}</div>', unsafe_allow_html=True
     )
     if turn.get("error"):
-        st.error(f"Nao consegui gerar uma Consulta valida: {turn['error']}")
+        st.error(f"Não consegui gerar uma Consulta válida: {turn['error']}")
         diagnostics = turn.get("diagnostics")
         ambiguous = getattr(diagnostics, "ambiguous", None)
         if ambiguous:
@@ -772,7 +772,7 @@ def _render_turn(turn: dict, index: int, is_last: bool) -> None:
     diagnostics = turn.get("diagnostics")
     understood = getattr(diagnostics, "understood", None)
     if understood:
-        with st.expander("Detalhes tecnicos", expanded=False):
+        with st.expander("Detalhes técnicos", expanded=False):
             for key, value in understood.items():
                 st.write(f"**{key}:** {value}")
 
@@ -799,7 +799,7 @@ def _render_turn(turn: dict, index: int, is_last: bool) -> None:
             elif outcome.status == "corrected":
                 turn["proposal"] = outcome.proposal
                 turn["sql"] = outcome.proposal.sql
-                st.warning("A execucao falhou e a Consulta foi corrigida. Revise e execute novamente.")
+                st.warning("A execução falhou e a Consulta foi corrigida. Revise e execute novamente.")
                 st.rerun()
             else:
                 turn["error"] = outcome.error
@@ -820,7 +820,7 @@ def _empty_state() -> None:
     st.markdown(
         '<div class="chs-card"><div class="chs-label">Comece aqui</div>'
         '<div class="chs-value">Nenhuma fonte de dados carregada</div>'
-        '<div class="chs-sub" style="margin-top:6px">Va para a aba <b>Dados</b>, escolha '
+        '<div class="chs-sub" style="margin-top:6px">Vá para a aba <b>Dados</b>, escolha '
         '<b>Fonte de dados</b> e carregue planilhas, um script SQL ou um schema de exemplo.</div></div>',
         unsafe_allow_html=True,
     )
@@ -879,7 +879,7 @@ def main() -> None:
         unsafe_allow_html=True,
     )
 
-    chat_tab, data_tab, config_tab = st.tabs(["Chat", "Dados", "Configuracoes"])
+    chat_tab, data_tab, config_tab = st.tabs(["Chat", "Dados", "Configurações"])
     with chat_tab:
         _render_chat_tab()
     with data_tab:

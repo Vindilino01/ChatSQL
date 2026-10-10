@@ -1,11 +1,11 @@
-"""Importacao de arquivo .sql (dump) (A IMPLEMENTAR pelo grupo).
+"""Importação de arquivo .sql (dump) (A IMPLEMENTAR pelo grupo).
 
-Um dump tipico contem `CREATE TABLE` e `INSERT INTO`. O app ja aceita colar esse
+Um dump típico contém `CREATE TABLE` e `INSERT INTO`. O app já aceita colar esse
 script na aba Dados; esta tarefa adiciona o **upload de arquivo**.
 
 Tarefa: D2 do ROADMAP.md.
 
-Dica: um script com INSERT ja e carregado por `InMemoryDatabase(schema)` (sem
+Dica: um script com INSERT já é carregado por `InMemoryDatabase(schema)` (sem
 dados de exemplo). Basta decodificar o arquivo e reaproveitar esse caminho.
 """
 

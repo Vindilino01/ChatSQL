@@ -1,4 +1,4 @@
-"""Testes-guia do Google Sheets (ROADMAP.md, tarefa D1). Desativados de proposito."""
+"""Testes-guia do Google Sheets (ROADMAP.md, tarefa D1). Desativados de propósito."""
 
 from __future__ import annotations
 

@@ -1,6 +1,11 @@
 # ROADMAP — Chat SQL
 
-A base está pronta (133 testes). Falta isto, dividido em 5 frentes:
+A base está pronta (133 testes). Falta isto, dividido em 5 frentes.
+**Para entender cada frente em detalhe, abra o guia dela (link em cada título).**
+
+[Início](README.md) · [Índice da documentação](docs/README.md) · [Mapa: onde fica o quê](docs/ONDE-FICA-O-QUE.md)
+
+---
 
 ## Frentes
 
@@ -17,7 +22,7 @@ A base está pronta (133 testes). Falta isto, dividido em 5 frentes:
 **A — Banco de dados** (Fase 1 — conector de referência pronto) — [guia completo](docs/frentes/A-banco-de-dados.md)
 - Ler e entender `chat_sql/db.py` (SQLite e Postgres já funcionam).
 - Evoluir: MySQL e teste real em Postgres (`CHATSQL_POSTGRES_URL`).
-- Garantir usuário **somente-leitura** no banco da instituição.
+- Garantir usuário **somente leitura** no banco da instituição.
 
 **B — Motor Offline** — [guia completo](docs/frentes/B-motor-offline.md)
 - Sinônimos por schema (`schemas/<nome>.synonyms.json`).
@@ -31,7 +36,7 @@ A base está pronta (133 testes). Falta isto, dividido em 5 frentes:
 - Biblioteca: `schemas/biblioteca.sql` + gerador de 10k registros.
 - Google Sheets por link público (D1) e upload de `.sql` (D2).
 
-**E — Entrega e apresentacao** — [guia completo](docs/frentes/E-entrega-e-apresentacao.md)
+**E — Entrega e apresentação** — [guia completo](docs/frentes/E-entrega-e-apresentacao.md)
 - `Dockerfile` + `docker compose up`.
 - CI (GitHub Actions), slides e ensaio da demo.
 
@@ -48,3 +53,7 @@ A base está pronta (133 testes). Falta isto, dividido em 5 frentes:
 ## Definido
 - SGBD da demo: **Postgres** (SQLite roda nos testes).
 - Instituição simulada: a definir (biblioteca, clínica, escola...).
+
+---
+
+[Início](README.md) · [Índice da documentação](docs/README.md) · [Mapa: onde fica o quê](docs/ONDE-FICA-O-QUE.md)

@@ -1,27 +1,52 @@
 # Comece aqui (para quem nunca programou)
 
 Este guia ensina, do zero, a **abrir o projeto, rodar o app e rodar os testes**.
-Nao precisa saber programar para seguir os passos.
+Não precisa saber programar para seguir os passos.
 
-Se voce usa Windows, os comandos abaixo funcionam. Em outros sistemas, veja as observacoes.
+Se você usa Windows, os comandos abaixo funcionam. Em outros sistemas, veja as observações.
+
+[Início](../README.md) · [Índice](README.md) · [Mapa: onde fica o quê](ONDE-FICA-O-QUE.md)
 
 ---
 
-## O que voce vai instalar
+## Como o projeto funciona (em uma imagem)
+
+```
+Você escreve:   "quantos clientes existem?"
+        |
+        v
+  O robô entende a pergunta
+        |
+        v
+  Ele escreve o SQL:   SELECT COUNT(*) FROM clientes;
+        |
+        v
+  A Trava confere: é só leitura? as colunas existem?
+        |
+        v
+  Você vê o SQL na tela e clica em Executar
+        |
+        v
+  O resultado aparece na tabela (e no gráfico)
+```
+
+---
+
+## O que você vai instalar
 
 | Programa | Para que serve |
 |---|---|
 | **Python** | A linguagem em que o projeto foi escrito |
-| **VS Code** | O editor onde voce vai ver e mexer nos arquivos |
-| **Git** | Guarda as versoes e envia as mudancas para o GitHub |
+| **VS Code** | O editor onde você vai ver e mexer nos arquivos |
+| **Git** | Guarda as versões e envia as mudanças para o GitHub |
 
 ---
 
 ## Passo 1 - Instalar o Python
 
 1. Acesse https://www.python.org/downloads/
-2. Baixe a versao mais recente e instale.
-3. **Importante (Windows):** na primeira tela da instalacao, marque a caixinha
+2. Baixe a versão mais recente e instale.
+3. **Importante (Windows):** na primeira tela da instalação, marque a caixinha
    **"Add python.exe to PATH"** antes de clicar em Install.
 
 Para conferir, abra o **Prompt de Comando** (tecle `Windows`, digite `cmd` e Enter) e rode:
@@ -55,21 +80,21 @@ git --version
 
 ## Passo 4 - Baixar o projeto
 
-Escolha **uma** das opcoes.
+Escolha **uma** das opções.
 
-### Opcao A - Pelo VS Code (mais facil)
+### Opção A - Pelo VS Code (mais fácil)
 
 1. Abra o VS Code.
 2. Aperte `Ctrl + Shift + P` e digite `Git: Clone`.
-3. Cole o endereco: `https://github.com/Vindilino01/ChatSQL.git`
-4. Escolha uma pasta no seu computador (ex.: Area de Trabalho).
+3. Cole o endereço: `https://github.com/Vindilino01/ChatSQL.git`
+4. Escolha uma pasta no seu computador (ex.: Área de Trabalho).
 5. Clique em **Open** quando ele perguntar se quer abrir.
 
-### Opcao B - Pelo site
+### Opção B - Pelo site
 
 1. Abra https://github.com/Vindilino01/ChatSQL
-2. Clique no botao verde **Code** e depois em **Download ZIP**.
-3. Descompacte o arquivo na Area de Trabalho.
+2. Clique no botão verde **Code** e depois em **Download ZIP**.
+3. Descompacte o arquivo na Área de Trabalho.
 4. No VS Code: menu **File > Open Folder** e escolha a pasta.
 
 ---
@@ -81,7 +106,7 @@ No VS Code, aperte `Ctrl + '` (control com o acento ao lado do 1) ou use o menu
 
 ---
 
-## Passo 6 - Preparar o projeto (so na primeira vez)
+## Passo 6 - Preparar o projeto (só na primeira vez)
 
 Copie e cole os comandos abaixo no terminal, um por vez, apertando Enter:
 
@@ -117,24 +142,24 @@ Para parar, volte ao terminal e aperte `Ctrl + C`.
 .\venv\Scripts\python -m pytest -q
 ```
 
-Deve aparecer algo como `133 passed, 6 skipped`. Isso significa que esta tudo certo.
+Deve aparecer algo como `133 passed, 6 skipped`. Isso significa que está tudo certo.
 
 ---
 
-## Como salvar e enviar uma mudanca
+## Como salvar e enviar uma mudança
 
-Sempre que voce mexer em algum arquivo e quiser mandar para o GitHub:
+Sempre que você mexer em algum arquivo e quiser mandar para o GitHub:
 
 ```powershell
 git pull
 git checkout -b meu-nome/minha-tarefa
 git add .
-git commit -m "Descreva em uma frase o que voce fez"
+git commit -m "Descreva em uma frase o que você fez"
 git push -u origin meu-nome/minha-tarefa
 ```
 
-Depois, abra o repositorio no GitHub e clique no botao **Compare & pull request**.
-Preencha o modelo que aparecer e peca para alguem revisar.
+Depois, abra o repositório no GitHub e clique no botão **Compare & pull request**.
+Preencha o modelo que aparecer e peça para alguém revisar.
 
 Dica: rode os testes **antes** de enviar:
 
@@ -144,21 +169,25 @@ Dica: rode os testes **antes** de enviar:
 
 ---
 
-## Dicionario rapido
+## Dicionário rápido
 
 | Palavra | O que quer dizer |
 |---|---|
-| Terminal | A telinha onde voce digita comandos |
-| Repositorio | A pasta do projeto que fica no GitHub |
+| Terminal | A telinha onde você digita comandos |
+| Repositório | A pasta do projeto que fica no GitHub |
 | Commit | Um "salvar" com uma mensagem explicando o que mudou |
-| Branch | Uma copia paralela para voce trabalhar sem atrapalhar os outros |
-| Pull Request (PR) | O pedido para juntar a sua mudanca ao projeto principal |
+| Branch | Uma cópia paralela para você trabalhar sem atrapalhar os outros |
+| Pull Request (PR) | O pedido para juntar a sua mudança ao projeto principal |
 | pytest | O programa que roda os testes do projeto |
 
 ---
 
 ## Deu problema?
 
-- **"python nao e reconhecido"**: reinstale o Python marcando "Add python.exe to PATH".
-- **"streamlit nao e reconhecido"**: use sempre `.\venv\Scripts\streamlit run app.py` (com o caminho da venv).
-- **Nao sabe por onde comecar a trabalhar**: veja [ONDE-FICA-O-QUE.md](ONDE-FICA-O-QUE.md) e o guia da sua frente em [frentes/](frentes/).
+- **"python não é reconhecido"**: reinstale o Python marcando "Add python.exe to PATH".
+- **"streamlit não é reconhecido"**: use sempre `.\venv\Scripts\streamlit run app.py` (com o caminho da venv).
+- **Não sabe por onde começar a trabalhar**: veja [ONDE-FICA-O-QUE.md](ONDE-FICA-O-QUE.md) e o guia da sua frente em [frentes/](frentes/).
+
+---
+
+[Início](../README.md) · [Índice](README.md) · [Mapa: onde fica o quê](ONDE-FICA-O-QUE.md)

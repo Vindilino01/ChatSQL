@@ -1,11 +1,11 @@
-"""A Trava: validacao obrigatoria antes de qualquer execucao.
+"""A Trava: validação obrigatória antes de qualquer execução.
 
 Camadas:
 1. Sintaxe (sqlglot).
-2. Uma unica instrucao.
+2. Uma única instrução.
 3. Allowlist estrita: apenas SELECT (inclui WITH/CTE e UNION).
-4. Funcoes perigosas proibidas.
-5. Consciencia do schema: tabelas e colunas referenciadas precisam existir.
+4. Funções perigosas proibidas.
+5. Consciência do schema: tabelas e colunas referenciadas precisam existir.
 """
 
 from __future__ import annotations
@@ -51,7 +51,7 @@ _READ_ONLY_TYPES = tuple(
 
 
 def clean_sql(text: str | None) -> str:
-    """Remove cercas de markdown e rotulos comuns que o modelo possa devolver."""
+    """Remove cercas de markdown e rótulos comuns que o modelo possa devolver."""
     if not text:
         return ""
     value = text.strip()
@@ -135,7 +135,7 @@ def _check_schema(stmt: exp.Expression, schema: Schema) -> str | None:
     for name in sorted(referenced_tables):
         if not schema.has_table(name):
             available = ", ".join(schema.table_names())
-            return f"A tabela '{name}' nao existe no Schema da Sessao. Tabelas disponiveis: {available}."
+            return f"A tabela '{name}' não existe no Schema da Sessão. Tabelas disponíveis: {available}."
 
     available_columns: set[str] = set()
     for kind, base in alias_to_table.values():
@@ -164,17 +164,17 @@ def _check_schema(stmt: exp.Expression, schema: Schema) -> str | None:
                 outputs = cte_outputs.get(base, set())
                 if outputs and column.lower() not in outputs:
                     available = ", ".join(sorted(outputs))
-                    return f"A coluna '{column}' nao existe em '{base}'. Colunas disponiveis: {available}."
+                    return f"A coluna '{column}' não existe em '{base}'. Colunas disponíveis: {available}."
             elif not schema.has_column(base, column):
                 available = ", ".join(schema.column_names(base))
-                return f"A coluna '{column}' nao existe em '{base}'. Colunas disponiveis: {available}."
+                return f"A coluna '{column}' não existe em '{base}'. Colunas disponíveis: {available}."
         else:
             lowered = column.lower()
             if lowered in select_aliases or lowered in _PSEUDO_COLUMNS:
                 continue
             if available_columns and lowered not in available_columns:
                 available = ", ".join(sorted(available_columns))
-                return f"A coluna '{column}' nao existe no Schema da Sessao. Colunas disponiveis: {available}."
+                return f"A coluna '{column}' não existe no Schema da Sessão. Colunas disponíveis: {available}."
     return None
 
 
@@ -186,7 +186,7 @@ def validate(raw_sql: str | None, schema: Schema, dialect: str = "sqlite") -> Gu
     """
     sql = clean_sql(raw_sql)
     if not sql:
-        return GuardResult(False, error="A Consulta esta vazia.")
+        return GuardResult(False, error="A Consulta está vazia.")
 
     try:
         statements = sqlglot.parse(sql, read=dialect)
@@ -195,20 +195,20 @@ def validate(raw_sql: str | None, schema: Schema, dialect: str = "sqlite") -> Gu
 
     statements = [stmt for stmt in statements if stmt is not None]
     if not statements:
-        return GuardResult(False, error="Nenhuma instrucao SQL encontrada.")
+        return GuardResult(False, error="Nenhuma instrução SQL encontrada.")
     if len(statements) > 1:
-        return GuardResult(False, error="Apenas uma instrucao por Consulta e permitida.")
+        return GuardResult(False, error="Apenas uma instrução por Consulta é permitida.")
 
     stmt = statements[0]
     if not _is_read_only(stmt):
         return GuardResult(
             False,
-            error=f"Somente SELECT e permitido (recebido: {type(stmt).__name__}).",
+            error=f"Somente SELECT é permitido (recebido: {type(stmt).__name__}).",
         )
 
     dangerous = _find_dangerous_function(stmt)
     if dangerous:
-        return GuardResult(False, error=f"Funcao proibida: {dangerous}().")
+        return GuardResult(False, error=f"Função proibida: {dangerous}().")
 
     problem = _check_schema(stmt, schema)
     if problem:

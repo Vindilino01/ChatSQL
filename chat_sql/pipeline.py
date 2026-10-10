@@ -1,7 +1,7 @@
-"""Orquestracao: gerar -> Trava -> (confirmar) -> executar -> Correcao.
+"""Orquestração: gerar -> Trava -> (confirmar) -> executar -> Correção.
 
-A geracao e a validacao acontecem ao enviar a Pergunta. A execucao so ocorre
-por confirmacao explicita do usuario. Se a execucao falhar, a Consulta
+A geração e a validação acontecem ao enviar a Pergunta. A execução só ocorre
+por confirmação explícita do usuário. Se a execução falhar, a Consulta
 corrigida volta para a tela e exige novo clique (ver ADR 0004).
 """
 
@@ -65,7 +65,7 @@ class ChatSession:
         self.last_result = getattr(self.provider, "last_result", None)
         self.attempts_used = 1
         if not sql:
-            self.last_error = getattr(self.provider, "last_reason", "") or "Nao entendi a pergunta."
+            self.last_error = getattr(self.provider, "last_reason", "") or "Não entendi a pergunta."
             return None
         outcome = validate(sql, self.schema)
         if outcome.ok and outcome.sql:
@@ -84,7 +84,7 @@ class ChatSession:
             self.last_error = outcome.error
             self.messages.append({"role": "assistant", "content": raw or sql})
             self.messages.append(
-                {"role": "user", "content": validation_feedback(outcome.error or "Consulta invalida.")}
+                {"role": "user", "content": validation_feedback(outcome.error or "Consulta inválida.")}
             )
         return None
 

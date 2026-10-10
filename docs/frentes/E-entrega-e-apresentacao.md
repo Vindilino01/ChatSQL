@@ -1,22 +1,26 @@
-# Frente E - Entrega e Apresentacao
+# Frente E - Entrega e Apresentação
 
-**Responsaveis:** (preencher)
+**Responsáveis:** (preencher)
+
+[Início](../../README.md) · [Índice](../README.md) · [Mapa: onde fica o quê](../ONDE-FICA-O-QUE.md) · [Roadmap](../../ROADMAP.md)
+
+---
 
 ## Em uma frase
 
-Colocar o projeto no ar para qualquer pessoa rodar (**servico**) e montar a
-apresentacao final.
+Colocar o projeto no ar para qualquer pessoa rodar (**serviço**) e montar a
+apresentação final.
 
 ## Onde fica no projeto
 
-| Arquivo / pasta | O que e |
+| Arquivo / pasta | O que é |
 |---|---|
 | `Dockerfile` | **A criar**: receita para rodar o app em qualquer computador. |
-| `docker-compose.yml` | **A criar**: sobe o app (e um Postgres de demonstracao, se quiser). |
+| `docker-compose.yml` | **A criar**: sobe o app (e um Postgres de demonstração, se quiser). |
 | `.github/workflows/tests.yml` | **A criar**: roda os testes a cada envio (CI). |
 | `.github/ISSUE_TEMPLATE/tarefa.md` | Modelo de tarefa (Issue). |
 | `.github/pull_request_template.md` | Modelo de envio (Pull Request). |
-| `PRD.md` | Documento do projeto; aqui entram os **resultados** (acuracia, prints). |
+| `PRD.md` | Documento do projeto; aqui entram os **resultados** (acurácia, prints). |
 | `docs/imagens/` | Onde colocar os prints das telas. |
 | `README.md` | Porta de entrada; precisa estar claro e com os links certos. |
 
@@ -32,7 +36,7 @@ apresentacao final.
    EXPOSE 8501
    CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
    ```
-2. Crie o `docker-compose.yml` (opcional, ja com Postgres):
+2. Crie o `docker-compose.yml` (opcional, já com Postgres):
    ```yaml
    services:
      app:
@@ -46,7 +50,7 @@ apresentacao final.
    ```
 4. Abra `http://localhost:8501`.
 
-## Segunda tarefa: CI (testes automaticos)
+## Segunda tarefa: CI (testes automáticos)
 
 1. Crie `.github/workflows/tests.yml`:
    ```yaml
@@ -65,13 +69,13 @@ apresentacao final.
    ```
 2. Cada envio passa a rodar os testes sozinho. O resultado aparece na aba **Actions** do GitHub.
 
-## Terceira tarefa: apresentacao
+## Terceira tarefa: apresentação
 
 1. Preencha o `PRD.md`:
-   - secao **Resultados**: acuracia do motor offline (Frente B);
+   - seção **Resultados**: acurácia do motor offline (Frente B);
    - prints das telas (veja `docs/imagens/README.md`).
-2. Monte os slides: problema, solucao, como funciona, seguranca, resultados, demo.
-3. Faca um **video de backup** da demo (caso o computador falhe no dia).
+2. Monte os slides: problema, solução, como funciona, segurança, resultados, demo.
+3. Faça um **vídeo de backup** da demo (caso o computador falhe no dia).
 4. Ensaiem: a demo deve caber em 10 minutos.
 
 ## Como testar
@@ -86,4 +90,17 @@ docker compose up --build
 - [ ] `docker compose up` funciona a partir de um clone limpo.
 - [ ] Os testes rodam sozinhos a cada envio (badge verde no README).
 - [ ] `PRD.md` com resultados e prints.
-- [ ] Slides prontos e demo ensaiada (com video de backup).
+- [ ] Slides prontos e demo ensaiada (com vídeo de backup).
+
+## Mini-glossário
+
+| Palavra | O que quer dizer |
+|---|---|
+| Docker | Uma "caixa" que roda o projeto em qualquer computador |
+| CI | Testes que rodam sozinhos a cada envio |
+| Deploy | Colocar o projeto no ar para as pessoas usarem |
+| Badge | Selo verde/vermelho no README mostrando se está tudo ok |
+
+---
+
+[Início](../../README.md) · [Índice](../README.md) · [Mapa: onde fica o quê](../ONDE-FICA-O-QUE.md) · [Roadmap](../../ROADMAP.md)

@@ -1,4 +1,4 @@
-"""Execucao isolada em SQLite na memoria, com defesa em profundidade."""
+"""Execução isolada em SQLite na memória, com defesa em profundidade."""
 
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ class InMemoryDatabase:
 
     @property
     def schema(self) -> Schema:
-        """O Schema da Sessao desta Fonte de Dados (ver chat_sql/datasource.py)."""
+        """O Schema da Sessão desta Fonte de Dados (ver chat_sql/datasource.py)."""
         return self._schema
 
     def _create_tables(self, ddl: str) -> None:

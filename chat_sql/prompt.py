@@ -1,4 +1,4 @@
-"""Montagem de prompts: instrucoes defensivas em ingles, Pares de Exemplos em PT-BR."""
+"""Montagem de prompts: instruções defensivas em inglês, Pares de Exemplos em PT-BR."""
 
 from __future__ import annotations
 
@@ -126,7 +126,7 @@ def build_deterministic_fewshots(schema: Schema) -> list[tuple[str, str]]:
         if date_column:
             examples.append(
                 (
-                    f"Quantos registros de {table.name} existem no ultimo mes?",
+                    f"Quantos registros de {table.name} existem no último mês?",
                     f'SELECT COUNT(*) AS total FROM "{table.name}" WHERE "{date_column}" >= date(\'now\', \'-1 month\');',
                 )
             )

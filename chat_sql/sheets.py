@@ -1,12 +1,12 @@
-"""Leitura de Google Sheets publico (A IMPLEMENTAR pelo grupo).
+"""Leitura de Google Sheets público (A IMPLEMENTAR pelo grupo).
 
-Uma planilha publica pode ser baixada como CSV trocando a URL de edicao por uma
+Uma planilha pública pode ser baixada como CSV trocando a URL de edição por uma
 URL de export:
 
     https://docs.google.com/spreadsheets/d/<ID>/export?format=csv
 
-O resultado e o mesmo de uma Planilha comum, entao alimenta
-`chat_sql/spreadsheet.read_tables` sem nenhuma mudanca.
+O resultado é o mesmo de uma Planilha comum, então alimenta
+`chat_sql/spreadsheet.read_tables` sem nenhuma mudança.
 
 Tarefa: D1 do ROADMAP.md.
 """

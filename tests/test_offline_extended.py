@@ -47,7 +47,7 @@ def test_produces_valid_executable_sql(question, ecommerce):
     sql = engine.generate_sql(question, schema)
     assert sql, engine.last_reason
     assert validate(sql, schema).ok
-    database.execute(sql)  # nao pode levantar
+    database.execute(sql)  # não pode levantar erro
 
 
 def _sql_for(question, ecommerce):

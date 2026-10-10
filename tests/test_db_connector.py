@@ -1,7 +1,7 @@
 """Testes do conector de banco real (ROADMAP.md, Fase 1).
 
-Cobrem SQLite (roda em qualquer maquina) e, opcionalmente, Postgres quando a
-variavel de ambiente CHATSQL_POSTGRES_URL estiver definida.
+Cobrem SQLite (roda em qualquer máquina) e, opcionalmente, Postgres quando a
+variável de ambiente CHATSQL_POSTGRES_URL estiver definida.
 """
 
 from __future__ import annotations

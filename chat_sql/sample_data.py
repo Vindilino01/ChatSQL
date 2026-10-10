@@ -1,6 +1,6 @@
-"""Gerador deterministico de Dados de Exemplo.
+"""Gerador determinístico de Dados de Exemplo.
 
-Sem custo de API e reproduzivel: a mesma seed (derivada do DDL) produz sempre
+Sem custo de API e reproduzível: a mesma seed (derivada do DDL) produz sempre
 os mesmos dados. Respeita chaves estrangeiras gerando tabelas-pai antes das
 filhas e amostrando valores reais das chaves referenciadas.
 """

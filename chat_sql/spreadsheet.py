@@ -1,7 +1,7 @@
-"""Leitura de planilhas (CSV/XLSX/XLS): inferencia de schema, limpeza de
-formatos brasileiros e carga para o SQLite em memoria.
+"""Leitura de planilhas (CSV/XLSX/XLS): inferência de schema, limpeza de
+formatos brasileiros e carga para o SQLite na memória.
 
-Uma aba/arquivo vira uma tabela. Chaves estrangeiras sao inferidas a partir de
+Uma aba/arquivo vira uma tabela. Chaves estrangeiras são inferidas a partir de
 colunas no formato `algo_id` quando existe uma tabela `algo`/`algos`.
 """
 
@@ -61,7 +61,7 @@ def _read_csv(content: bytes) -> pd.DataFrame:
     try:
         return pd.read_csv(io.StringIO(text), sep=delimiter)
     except pd.errors.EmptyDataError as exc:
-        raise ValueError("O arquivo CSV esta vazio ou nao tem colunas.") from exc
+        raise ValueError("O arquivo CSV está vazio ou não tem colunas.") from exc
 
 
 def _to_numeric(series: pd.Series) -> pd.Series | None:
@@ -110,7 +110,7 @@ def _coerce_frame(frame: pd.DataFrame) -> pd.DataFrame:
     frame = frame.copy()
     frame.columns = [str(column).strip() for column in frame.columns]
 
-    # Remove colunas de indice/nao nomeadas (comuns em exportacoes de planilha).
+    # Remove colunas de índice/não nomeadas (comuns em exportações de planilha).
     drop = [
         column
         for column in frame.columns

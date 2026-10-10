@@ -1,4 +1,4 @@
-"""Vocabulario PT-BR do Motor Offline."""
+"""Vocabulário PT-BR do Motor Offline."""
 
 from __future__ import annotations
 
