@@ -3,6 +3,9 @@
 Este documento explica **como o Chat SQL funciona por dentro**, modulo por modulo.
 A ideia e que qualquer integrante consiga ler e entender em ~20 minutos.
 
+> Trabalhando em uma frente especifica? O guia dela fica em [`docs/frentes/`](frentes/).
+> Aqui e a visao geral do codigo.
+
 ## 1. Visao em uma imagem
 
 ```

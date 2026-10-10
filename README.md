@@ -14,6 +14,30 @@
 
 ---
 
+## Mapa do projeto (comece por aqui)
+
+| Se voce quer... | Va para |
+|---|---|
+| Rodar o app agora | [Como rodar](#como-rodar-3-passos) |
+| Nunca programou | [docs/COMECE-AQUI.md](docs/COMECE-AQUI.md) |
+| Saber onde fica cada coisa | [docs/ONDE-FICA-O-QUE.md](docs/ONDE-FICA-O-QUE.md) |
+| Ver a sua responsabilidade | [ROADMAP.md](ROADMAP.md) e o guia da sua frente |
+| Entender o codigo | [docs/ARQUITETURA.md](docs/ARQUITETURA.md) |
+| O que cada palavra significa | [CONTEXT.md](CONTEXT.md) |
+| Indice completo da documentacao | [docs/README.md](docs/README.md) |
+
+## Equipe (preencher)
+
+| Frente | Responsaveis | Guia |
+|---|---|---|
+| A. Banco de dados | (preencher) | [guia](docs/frentes/A-banco-de-dados.md) |
+| B. Motor Offline | (preencher) | [guia](docs/frentes/B-motor-offline.md) |
+| C. Interface e Design | (preencher) | [guia](docs/frentes/C-interface-e-design.md) |
+| D. Dados e biblioteca | (preencher) | [guia](docs/frentes/D-dados-e-biblioteca.md) |
+| E. Entrega e apresentacao | (preencher) | [guia](docs/frentes/E-entrega-e-apresentacao.md) |
+
+---
+
 ## O que ele faz
 
 Voce escreve uma pergunta ("os 10 clientes que mais compraram no mes passado") e o Chat SQL:
@@ -81,9 +105,12 @@ docs/                  Arquitetura e decisoes (ADRs)
 
 ## Documentacao
 
-- [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) — como o codigo funciona, passo a passo.
+- [`docs/README.md`](docs/README.md) — **indice de tudo** (comece por aqui).
+- [`docs/COMECE-AQUI.md`](docs/COMECE-AQUI.md) — passo a passo para quem nunca programou.
+- [`docs/ONDE-FICA-O-QUE.md`](docs/ONDE-FICA-O-QUE.md) — onde fica cada coisa.
+- [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) — como o codigo funciona.
 - [`PRD.md`](PRD.md) — documento de produto (visao, arquitetura, resultados).
-- [`ROADMAP.md`](ROADMAP.md) — o que falta e o que cada pessoa pode fazer.
+- [`ROADMAP.md`](ROADMAP.md) — o que falta e quem faz.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — como contribuir e rodar os testes.
 - [`CONTEXT.md`](CONTEXT.md) — glossario do dominio.
 

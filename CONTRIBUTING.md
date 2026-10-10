@@ -3,6 +3,9 @@
 Guia rapido para o grupo (7 pessoas). A ideia e que qualquer pessoa consiga rodar, entender
 e evoluir o projeto sem quebrar o que ja funciona.
 
+> **Esta em qual frente?** Comece pelo guia dela em [`docs/frentes/`](docs/frentes/).
+> Se voce nunca programou, veja primeiro [`docs/COMECE-AQUI.md`](docs/COMECE-AQUI.md).
+
 ## 1. Preparar o ambiente
 
 ```bash
@@ -54,7 +57,7 @@ Se tudo passar (133 testes + 6 guias `skip`), voce esta pronto.
 1. Entenda o fluxo em `chat_sql/nl/engine.py` (`_detect_aggregation`, `_extract_*`).
 2. Escreva o teste primeiro (em `tests/`).
 3. Implemente o minimo para passar.
-4. Atualize o `PRD.md` (secao "O que o Motor Offline entende", no README).
+4. Atualize o `README.md` (secao "O que o Motor Offline entende").
 
 ### Adicionar uma nova Fonte de Dados (ex.: banco real)
 

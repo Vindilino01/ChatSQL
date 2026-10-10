@@ -14,24 +14,24 @@ A base está pronta (133 testes). Falta isto, dividido em 5 frentes:
 
 ## Tarefas
 
-**A — Banco de dados** (Fase 1 — conector de referência pronto)
+**A — Banco de dados** (Fase 1 — conector de referência pronto) — [guia completo](docs/frentes/A-banco-de-dados.md)
 - Ler e entender `chat_sql/db.py` (SQLite e Postgres já funcionam).
 - Evoluir: MySQL e teste real em Postgres (`CHATSQL_POSTGRES_URL`).
 - Garantir usuário **somente-leitura** no banco da instituição.
 
-**B — Motor Offline**
+**B — Motor Offline** — [guia completo](docs/frentes/B-motor-offline.md)
 - Sinônimos por schema (`schemas/<nome>.synonyms.json`).
 - Preencher o placar em `tests/eval/cases.json` e registrar a acurácia no `PRD.md`.
 
-**C — Interface**
+**C — Interface e Design** — [guia completo](docs/frentes/C-interface-e-design.md)
 - Conexão já ligada na aba Dados (URL + conectar). Evoluir: botão "Testar
   conexão", seletor visual de tabelas e salvar a conexão (sem a senha).
 
-**D — Dados**
+**D — Dados e biblioteca** — [guia completo](docs/frentes/D-dados-e-biblioteca.md)
 - Biblioteca: `schemas/biblioteca.sql` + gerador de 10k registros.
 - Google Sheets por link público (D1) e upload de `.sql` (D2).
 
-**E — Entrega**
+**E — Entrega e apresentacao** — [guia completo](docs/frentes/E-entrega-e-apresentacao.md)
 - `Dockerfile` + `docker compose up`.
 - CI (GitHub Actions), slides e ensaio da demo.
 
