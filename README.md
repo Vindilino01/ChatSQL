@@ -49,6 +49,12 @@ Você escreve uma pergunta ("os 10 clientes que mais compraram no mês passado")
 3. mostra o SQL na tela **antes de executar**;
 4. executa e exibe o resultado em tabela (com gráfico quando faz sentido).
 
+Perguntas que ele entende hoje: contar, somar, média, maior/menor, top-N,
+agrupar ("por mês", "por editora"), filtrar por texto ("título Dom Casmurro",
+"que começam com Dom"), por data ("mês passado", "janeiro de 2025", "últimos 30
+dias") e por número ("estoque maior que 500"). Quando não entende, **não chuta**:
+mostra o motivo e sugere perguntas.
+
 ## Como funciona (em uma imagem)
 
 ```
@@ -87,11 +93,43 @@ Você escreve:   "quantos clientes existem?"
 
 1. Copie `.env.example` para `.env` e preencha `CHATSQL_SEED_URL`.
 2. Aplique o DDL da biblioteca: `.\venv\Scripts\python scripts\apply_ddl.py`
-3. No app: aba **Dados** → **Banco de dados (Postgres/SQLite)** → cole a URL
+3. Popule com dados de exemplo: `.\venv\Scripts\python scripts\seed_biblioteca.py`
+4. No app: aba **Dados** → **Banco de dados (Postgres/SQLite)** → cole a URL
    `postgresql+psycopg://usuario:senha@host/banco?sslmode=require`.
 
 Use sempre um usuário **somente leitura** no banco. O schema da biblioteca e o
 porquê de cada restrição estão em [`docs/BANCO.md`](docs/BANCO.md).
+
+## Demonstração: Biblioteca Universitária
+
+O cenário da apresentação é uma biblioteca com **obras, autores e editoras
+reais** (de *Os Lusíadas*, 1572, a *Nexus*, 2024) e cerca de **5.300 registros**:
+
+| Tabela | Registros |
+|---|---|
+| livro | 456 (obras reais) |
+| autor | 277 (autores reais) |
+| editora | 40 (editoras reais) |
+| livro_autor | 481 |
+| exemplar | 744 |
+| usuario | 800 |
+| emprestimo | 2.500 (399 ativos) |
+
+Os ISBNs são sintéticos e exemplares, usuários e empréstimos são gerados.
+Para aumentar o volume:
+
+```powershell
+.\venv\Scripts\python scripts\seed_biblioteca.py --usuarios 2000 --emprestimos 8000
+```
+
+## Resultado medido
+
+O Motor Offline (sem IA) acerta **14 de 14 perguntas** no banco da biblioteca:
+
+```powershell
+.\venv\Scripts\python -m pytest tests/eval/test_biblioteca.py -s
+# Acurácia (biblioteca, sem IA): 14/14 = 100%
+```
 
 ## Como rodar (3 passos)
 
@@ -117,6 +155,14 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
+Resultado atual: **174 testes passando, 6 guias desativados** (features do roadmap).
+
+Para medir a acurácia do motor no banco da biblioteca (precisa do `.env`):
+
+```powershell
+.\venv\Scripts\python -m pytest tests/eval/test_biblioteca.py -s
+```
+
 ## Estrutura (resumo)
 
 ```
@@ -133,8 +179,12 @@ chat_sql/
   db.py                Conexão somente leitura (SQLite/Postgres)
 schemas/               Schemas de exemplo (inclui biblioteca-postgres.sql)
 exemplos/              Planilhas de exemplo
-scripts/               Utilitários (apply_ddl.py)
+scripts/
+  apply_ddl.py         Aplica o DDL da biblioteca no banco do .env
+  seed_biblioteca.py   Popula com dados de exemplo
+  acervo_biblioteca.py Acervo real (obras, autores, editoras)
 tests/                 Testes (também servem de especificação)
+tests/eval/            Avaliação de acurácia do motor
 docs/                  Arquitetura, banco e decisões (ADRs)
 ```
 
