@@ -439,7 +439,22 @@ def _connect_database() -> None:
     schema = source.schema
     if not schema.tables:
         st.error("A conexão funcionou, mas nenhuma tabela foi encontrada.")
+        missing = getattr(source, "missing_tables", None)
+        if missing:
+            st.caption(
+                "Estes nomes não existem no banco: "
+                + ", ".join(f"`{name}`" for name in missing)
+                + ". Deixe o campo vazio para usar todas as tabelas."
+            )
+        source.close()
         return
+
+    missing = getattr(source, "missing_tables", None)
+    if missing:
+        st.warning(
+            "Não encontrei: " + ", ".join(f"`{name}`" for name in missing) + ". "
+            "As demais tabelas foram carregadas."
+        )
 
     provider = _build_provider()
     st.session_state.schema = schema
@@ -484,7 +499,8 @@ def _render_data_tab() -> None:
         st.text_input(
             "Tabelas permitidas (opcional, separadas por vírgula)",
             key="db_tables",
-            placeholder="livros, autores, emprestimos",
+            placeholder="livro, autor, emprestimo",
+            help="Deixe vazio para liberar todas. Use os nomes exatos das tabelas.",
         )
         if st.button("Conectar e usar", key="connect_db", type="primary"):
             _connect_database()

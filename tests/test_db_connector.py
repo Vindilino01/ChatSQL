@@ -91,6 +91,16 @@ def test_allowed_tables_filter(tmp_path):
     source.close()
 
 
+def test_allowed_tables_accepts_plural_and_reports_missing(tmp_path):
+    source = DatabaseSource(
+        DatabaseConfig(url=_make_sqlite(tmp_path), allowed_tables=["clientes", "inexistente"])
+    )
+    # "clientes" é o próprio nome da tabela; o plural de "pedido" seria "pedidos".
+    assert source.schema.has_table("clientes")
+    assert source.missing_tables == ["inexistente"]
+    source.close()
+
+
 def test_unknown_url_raises_query_error():
     url = "postgresql+psycopg://user:pass@127.0.0.1:1/naoexiste?connect_timeout=2"
     with pytest.raises(QueryError):

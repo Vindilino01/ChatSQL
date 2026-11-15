@@ -33,6 +33,7 @@ from .config import MAX_FETCH_ROWS, QUERY_TIMEOUT_SECONDS
 from .engine import QueryError, QueryTimeoutError, QueryResult
 from .guard import validate
 from .nl.dialect import normalize_name
+from .nl.text import plural, singular
 from .schema import Column, ForeignKey, Schema, Table
 
 
@@ -131,12 +132,39 @@ class DatabaseSource:
             raise QueryError(f"Não foi possível conectar ao banco: {exc}") from exc
 
         schema = _introspect(self._engine, config.schema_name)
+        self.rejected_tables: list[str] = []
+        self.missing_tables: list[str] = []
         if config.allowed_tables:
-            allowed = {name.lower() for name in config.allowed_tables}
+            allowed = {name.strip().lower() for name in config.allowed_tables if name.strip()}
+            available = set(schema.tables)
+            # Aceita o nome exato e também o plural/singular simples
+            # ("livros" -> "livro"), que é o erro mais comum ao digitar.
+            resolved: set[str] = set()
+            for name in allowed:
+                candidate = name
+                found = None
+                variants = [name, singular(name), plural(name)]
+                # Plurais terminados em "-es" ("autores" -> "autor") não são
+                # cobertos por `singular`; tentamos a remoção direta.
+                if name.endswith("es"):
+                    variants.append(name[:-2])
+                if name.endswith("s"):
+                    variants.append(name[:-1])
+                for option in variants:
+                    if option in available:
+                        found = option
+                        break
+                if found:
+                    resolved.add(found)
+                else:
+                    self.missing_tables.append(candidate)
+            self.rejected_tables = [
+                key for key in available if key not in resolved
+            ]
             schema = Schema(
                 raw_ddl=schema.raw_ddl,
                 normalized_ddl=schema.normalized_ddl,
-                tables={key: table for key, table in schema.tables.items() if key in allowed},
+                tables={key: table for key, table in schema.tables.items() if key in resolved},
             )
         self._schema = schema
 
