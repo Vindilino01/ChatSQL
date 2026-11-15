@@ -106,13 +106,19 @@ def _is_measure_column(column: Column) -> bool:
     """Uma coluna só pode ser "medida" se for numérica e não for identificador.
 
     Cobre `id`, `id_x` e `x_id` — os três formatos aparecem em schemas reais.
+    Anos, datas e códigos também ficam de fora: somar `ano_publicacao` ou
+    `cep` não significa nada.
     """
     name = column.name.lower()
     if column.primary_key:
         return False
     if name == "id" or name.endswith("_id") or name.startswith("id_"):
         return False
-    return True
+    non_measures = (
+        "ano", "year", "data", "date", "hora", "mes_", "cep", "cpf", "cnpj",
+        "documento", "isbn", "codigo", "cod_", "numero", "telefone", "matricula",
+    )
+    return not any(token in name for token in non_measures)
 
 
 def _column_mentioned(column: Column, q_forms: set[str]) -> bool:
@@ -576,38 +582,55 @@ def suggest_questions(schema: Schema, limit: int = 6) -> list[str]:
     tables = list(schema.tables.values())
     single = len(tables) == 1
     suggestions: list[str] = []
+
     for table in tables[:2]:
         suffix = "" if single else f" de {table.name}"
+
+        def label() -> str:
+            return _label_column(table).name
+
+        def numeric() -> str | None:
+            for column in table.columns:
+                if column.type in ("INTEGER", "REAL") and _is_measure_column(column):
+                    return column.name
+            return None
+
+        def date_col() -> str | None:
+            column = _date_column(table)
+            return column.name if column else None
+
         suggestions.append("Quantos registros existem?" if single else f"Quantos {table.name} existem?")
         suggestions.append(f"Liste os registros{suffix}")
+
+        # "quais editoras existem" -> lista os nomes distintos da tabela
+        suggestions.append(
+            f"Quais {table.name} existem?"
+        )
+
+        value = numeric()
+        if value:
+            suggestions.append(f"Qual o total de {value}?")
+
         text_columns = [
             column
             for column in table.columns
             if column.type == "TEXT" and not column.primary_key and not column.name.lower().endswith("_id")
         ]
-        numeric = [
-            column
-            for column in table.columns
-            if column.type in ("INTEGER", "REAL") and _is_measure_column(column)
-        ]
-        date_column = _date_column(table)
-        if numeric:
-            suggestions.append(f"Qual o total de {numeric[0].name}?")
-            if single:
-                suggestions.append(f"Quais os 5 maiores por {numeric[0].name}?")
-            else:
-                suggestions.append(f"Quais os 5 maiores {table.name} por {numeric[0].name}?")
-        if text_columns and numeric:
-            suggestions.append(f"Total de {numeric[0].name} por {text_columns[0].name}")
-        if date_column:
+        if text_columns:
+            suggestions.append(f"Quantos {table.name} por {text_columns[0].name}?")
+
+        if date_col():
             suggestions.append(
-                "Quantos registros no mês passado?" if single else f"Quantos {table.name} no mês passado?"
+                "Quantos registros no mês passado?"
+                if single
+                else f"Quantos {table.name} no mês passado?"
             )
             suggestions.append(
                 "Qual foi o último registro?"
                 if single
                 else f"Qual foi o último registro de {table.name}?"
             )
+
     seen: set[str] = set()
     unique: list[str] = []
     for suggestion in suggestions:
@@ -831,7 +854,42 @@ class OfflineEngine:
 
         group_col = plan.group
         measure = plan.measure
-        group_expr = self._group_expression(builder, plan)
+
+        # Agregação pedida ("maior", "total"...) sem uma coluna que possa ser
+        # medida (ex.: "maiores por ano_publicacao"). Nesse caso, a intenção
+        # real é ordenar/listar por essa coluna, não somar.
+        if plan.intent in ("sum", "avg", "min", "max") and measure is None:
+            plan.intent = "list"
+            if plan.order_by is None and group_col is not None:
+                plan.order_by = group_col
+                if plan.intent != "list":
+                    pass
+                plan.order_desc = True
+            group_col = None
+
+        # Se o motor escolheu a MESMA coluna para agrupar e para medir, a
+        # consulta viraria "SELECT x, SUM(x) GROUP BY x" — sem sentido.
+        # Nesse caso a pergunta é, na prática, uma ordenação por essa coluna.
+        if (
+            group_col is not None
+            and measure is not None
+            and group_col[0].name == measure[0].name
+            and group_col[1].name == measure[1].name
+        ):
+            plan.order_by = plan.order_by or group_col
+            plan.order_desc = True
+            plan.intent = "list"
+            group_col = None
+            measure = None
+
+        # Ranking ("os 5 maiores ...") sem coluna de ordenação: usa a data.
+        if plan.limit and group_col is None and measure is None and plan.order_by is None:
+            rank_column = _date_column(plan.subject)
+            if rank_column is not None:
+                plan.order_by = (plan.subject, rank_column)
+                plan.order_desc = True
+
+        group_expr = self._group_expression(builder, plan) if group_col is not None else None
         measure_expr = builder.col(measure[0].name, measure[1].name) if measure else None
 
         if plan.limit and group_col is None and measure is not None:
