@@ -36,6 +36,7 @@ Este é o **índice**. Encontre aqui o que você precisa; cada link leva direto 
 | Conectar num banco de dados | [frentes/A-banco-de-dados.md](frentes/A-banco-de-dados.md) |
 | Criar os dados da biblioteca | [frentes/D-dados-e-biblioteca.md](frentes/D-dados-e-biblioteca.md) |
 | Ler planilhas, Google Sheets ou dump `.sql` | [frentes/D-dados-e-biblioteca.md](frentes/D-dados-e-biblioteca.md) |
+| Entender o banco da biblioteca | [BANCO.md](BANCO.md) |
 | Publicar o app ou montar a apresentação | [frentes/E-entrega-e-apresentacao.md](frentes/E-entrega-e-apresentacao.md) |
 | Colocar prints das telas | [imagens/README.md](imagens/README.md) |
 
@@ -49,6 +50,7 @@ Este é o **índice**. Encontre aqui o que você precisa; cada link leva direto 
 | [../CONTRIBUTING.md](../CONTRIBUTING.md) | Como contribuir, testar e abrir um PR |
 | [../CONTEXT.md](../CONTEXT.md) | Glossário: o que cada palavra quer dizer |
 | [adr/](adr/) | Decisões importantes que já tomamos |
+| [BANCO.md](BANCO.md) | O schema da biblioteca e o porquê de cada restrição |
 | [../tests/](../tests/) | Os testes, que também servem de exemplo |
 
 ---

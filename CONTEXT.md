@@ -88,6 +88,18 @@ _Evite_: Benchmark, teste, eval
 O conjunto estruturado que o Motor Offline devolve quando não gera uma Consulta: motivo, tabelas ambíguas e sugestões de Perguntas.
 _Evite_: Erro, log, mensagem
 
+**Documento**:
+O CPF do usuário guardado como 11 dígitos, sem pontos nem traço; a máscara é só de exibição.
+_Evite_: CPF formatado, documento com máscara
+
+**ISBN**:
+O código de 13 dígitos que identifica a edição de um livro, guardado sem hífens.
+_Evite_: ISBN formatado, código do livro
+
+**Dialeto**:
+O conjunto de diferenças de SQL entre bancos (SQLite, Postgres) que o Motor Offline precisa respeitar.
+_Evite_: Versão do banco, sintaxe
+
 ---
 
 [Início](README.md) · [Índice da documentação](docs/README.md) · [Mapa: onde fica o quê](docs/ONDE-FICA-O-QUE.md)

@@ -66,6 +66,7 @@ A ideia é que qualquer integrante consiga ler e entender em ~20 minutos.
 | `nl/text.py` | Normalização de PT-BR (acentos, plural) | Regras com poucas linhas |
 | `nl/lexicon.py` | Vocabulário (meses, unidades, medidas) | Dados separados da lógica |
 | `nl/builder.py` | Monta SQL e junções (BFS no grafo de FKs) | Descobrir como ligar tabelas |
+| `nl/dialect.py` | Diferenças de SQL entre SQLite e Postgres | O mesmo motor servir aos dois |
 | `nl/engine.py` | Interpreta a pergunta e decide o SQL | O "cérebro" offline |
 | `guard.py` | A Trava: valida antes de executar | Segurança |
 | `engine.py` | SQLite na memória | Execução isolada e rápida |
@@ -118,6 +119,7 @@ com motivo e sugestões (nunca "chuta").
 |----------|------------|
 | Ensinar um sinônimo | `nl/lexicon.py` |
 | Entender um novo padrão | `nl/engine.py` + teste |
+| Suportar outro banco (dialeto) | `nl/dialect.py` |
 | Nova Fonte de Dados | `datasource.py` + `db.py`/`sheets.py` |
 | Mudar a tela | `app.py` |
 | Novo schema de exemplo | `schemas/` |

@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from ..schema import Column, Schema, Table
 from . import lexicon as lex
 from .builder import SqlBuilder
+from .dialect import Dialect, get_dialect, normalize_name
 from .text import forms, normalize, plural, position, question_forms, singular
 
 # ---------------------------------------------------------------------------
@@ -102,8 +103,16 @@ def _explain_plan(plan: Plan) -> str:
 
 
 def _is_measure_column(column: Column) -> bool:
+    """Uma coluna só pode ser "medida" se for numérica e não for identificador.
+
+    Cobre `id`, `id_x` e `x_id` — os três formatos aparecem em schemas reais.
+    """
     name = column.name.lower()
-    return not column.primary_key and not name.endswith("_id") and name != "id"
+    if column.primary_key:
+        return False
+    if name == "id" or name.endswith("_id") or name.startswith("id_"):
+        return False
+    return True
 
 
 def _column_mentioned(column: Column, q_forms: set[str]) -> bool:
@@ -624,9 +633,11 @@ class OfflineEngine:
 
     offline = True
 
-    def __init__(self) -> None:
+    def __init__(self, dialect: str = "sqlite") -> None:
         self.last_result: OfflineResult | None = None
         self.last_reason = ""
+        self.dialect_name = normalize_name(dialect)
+        self.dialect: Dialect = get_dialect(self.dialect_name)
 
     def test_connection(self) -> None:
         return None
@@ -889,11 +900,11 @@ class OfflineEngine:
         if column is None:
             return None
         if plan.group_time == "month":
-            return f"strftime('%Y-%m', {column})"
+            return self.dialect.year_month(column)
         if plan.group_time == "year":
-            return f"strftime('%Y', {column})"
+            return self.dialect.year_number(column)
         if plan.group_time == "day":
-            return f"date({column})"
+            return self.dialect.date_only(column)
         return column
 
     def _where_sql(self, plan: Plan, builder: SqlBuilder) -> str:
@@ -912,16 +923,17 @@ class OfflineEngine:
                 return [f"{column} BETWEEN {low} AND {high}"]
             return [f"{column} {filter_.operator} {filter_.value}"]
         if filter_.kind == "boolean":
-            return [f"{column} = {filter_.value}"]
+            return [f"{column} = {self.dialect.boolean(bool(filter_.value))}"]
         if filter_.kind == "null":
             return [f"{column} IS {'NULL' if filter_.operator == 'is_null' else 'NOT NULL'}"]
         if filter_.kind == "like":
             value = str(filter_.value)
+            operator = self.dialect.like()
             if filter_.operator == "contains":
-                return [f"{column} LIKE '%{value}%'"]
+                return [f"{column} {operator} '%{value}%'"]
             if filter_.operator == "startswith":
-                return [f"{column} LIKE '{value}%'"]
-            return [f"{column} LIKE '%{value}'"]
+                return [f"{column} {operator} '{value}%'"]
+            return [f"{column} {operator} '%{value}'"]
         if filter_.kind == "text":
             value = str(filter_.value).replace("'", "''")
             return [f"{column} = '{value}'"]
@@ -932,42 +944,43 @@ class OfflineEngine:
     def _date_sql(self, filter_: Filter, column: str) -> list[str]:
         mode = filter_.operator
         value = filter_.value
+        d = self.dialect
         if mode == "last_month":
-            return [f"{column} >= date('now', '-1 month')"]
+            return [f"{column} >= {d.months_ago(1)}"]
         if mode == "last_two_months":
-            return [f"{column} >= date('now', '-2 month')"]
+            return [f"{column} >= {d.months_ago(2)}"]
         if mode == "last_n_months":
-            return [f"{column} >= date('now', '-{int(value)} months')"]
+            return [f"{column} >= {d.months_ago(int(value))}"]
         if mode == "last_n_days":
-            return [f"{column} >= date('now', '-{int(value)} days')"]
+            return [f"{column} >= {d.days_ago(int(value))}"]
         if mode == "last_n_years":
-            return [f"{column} >= date('now', '-{int(value)} years')"]
+            return [f"{column} >= {d.years_ago(int(value))}"]
         if mode == "this_month":
-            return [f"{column} >= date('now', 'start of month')"]
+            return [f"{column} >= {d.start_of_month()}"]
         if mode == "last_year":
             return [
-                f"{column} >= date('now', 'start of year', '-1 year')",
-                f"{column} < date('now', 'start of year')",
+                f"{column} >= {d.start_of_year(1)}",
+                f"{column} < {d.start_of_year(0)}",
             ]
         if mode == "this_year":
-            return [f"{column} >= date('now', 'start of year')"]
+            return [f"{column} >= {d.start_of_year(0)}"]
         if mode == "days_ago":
-            return [f"{column} = date('now', '-{int(value)} days')"]
+            return [f"{column} = {d.days_ago(int(value))}"]
         if mode == "month_name":
             month, year = value  # type: ignore[misc]
-            conditions = [f"strftime('%m', {column}) = '{int(month):02d}'"]
+            conditions = [f"{d.month_number(column)} = '{int(month):02d}'"]
             if year:
-                conditions.append(f"strftime('%Y', {column}) = '{int(year)}'")
+                conditions.append(f"{d.year_number(column)} = '{int(year)}'")
             return conditions
         if mode == "year":
-            return [f"strftime('%Y', {column}) = '{int(value)}'"]
+            return [f"{d.year_number(column)} = '{int(value)}'"]
         if mode == "quarter":
             index = int(value)
             first = (index - 1) * 3 + 1
             last = first + 2
             return [
-                f"strftime('%Y', {column}) = strftime('%Y', 'now')",
-                f"CAST(strftime('%m', {column}) AS INTEGER) BETWEEN {first} AND {last}",
+                f"{d.year_number(column)} = {d.year_number(d.current_date())}",
+                d.month_between(column, first, last),
             ]
         return []
 

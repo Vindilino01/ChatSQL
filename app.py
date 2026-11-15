@@ -160,9 +160,14 @@ def _init_state() -> None:
         st.session_state.setdefault(key, value)
 
 
+def _active_dialect() -> str:
+    """O dialeto da Fonte de Dados ativa (banco real) ou 'sqlite' (memória)."""
+    return getattr(st.session_state.get("database"), "dialect", "sqlite")
+
+
 def _build_provider():
     if st.session_state.provider_name == OFFLINE_PROVIDER:
-        return OfflineEngine()
+        return OfflineEngine(dialect=_active_dialect())
     preset = PROVIDER_PRESETS[st.session_state.provider_name]
     api_key = st.session_state.api_key
     if preset.requires_key and not api_key:
@@ -443,7 +448,7 @@ def _connect_database() -> None:
     st.session_state.provider = provider
     st.session_state.fewshots = _fewshots_for(schema, provider)
     st.session_state.chat = (
-        ChatSession(provider, schema, source, st.session_state.fewshots)
+        ChatSession(provider, schema, source, st.session_state.fewshots, dialect=source.dialect)
         if provider is not None
         else None
     )
@@ -630,7 +635,9 @@ def _ensure_chat() -> ChatSession | None:
     if provider is None:
         return None
     fewshots = st.session_state.fewshots or _fewshots_for(schema, provider)
-    chat = ChatSession(provider, schema, database, fewshots)
+    chat = ChatSession(
+        provider, schema, database, fewshots, dialect=getattr(database, "dialect", "sqlite")
+    )
     st.session_state.provider = provider
     st.session_state.fewshots = fewshots
     st.session_state.chat = chat

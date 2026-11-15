@@ -32,6 +32,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from .config import MAX_FETCH_ROWS, QUERY_TIMEOUT_SECONDS
 from .engine import QueryError, QueryTimeoutError, QueryResult
 from .guard import validate
+from .nl.dialect import normalize_name
 from .schema import Column, ForeignKey, Schema, Table
 
 
@@ -115,8 +116,15 @@ class DatabaseSource:
 
     def __init__(self, config: DatabaseConfig) -> None:
         self._config = config
+        connect_args: dict = {}
+        # No Postgres, abre todas as conexões já em modo leitura. A Trava é a
+        # primeira barreira; isto é a segunda, no nível do servidor.
+        if config.url.startswith(("postgresql", "postgres")):
+            connect_args["options"] = "-c default_transaction_read_only=on"
         try:
-            self._engine = create_engine(config.url, pool_pre_ping=True)
+            self._engine = create_engine(
+                config.url, pool_pre_ping=True, connect_args=connect_args
+            )
             with self._engine.connect() as connection:
                 connection.exec_driver_sql("SELECT 1")
         except SQLAlchemyError as exc:
@@ -137,22 +145,30 @@ class DatabaseSource:
         return self._schema
 
     @property
-    def dialect(self) -> str:
+    def engine_dialect(self) -> str:
+        """Nome do dialeto no SQLAlchemy ('postgresql', 'sqlite', 'mysql')."""
         return self._engine.dialect.name
 
+    @property
+    def dialect(self) -> str:
+        """Nome do dialeto no formato usado pelo Motor Offline ('postgres'/'sqlite')."""
+        return normalize_name(self.engine_dialect)
+
     def _sqlglot_dialect(self) -> str:
-        return _SQLGLOT_DIALECT.get(self.dialect, "sqlite")
+        return _SQLGLOT_DIALECT.get(self.engine_dialect, "sqlite")
 
     def _apply_read_only(self, connection, timeout: float) -> None:
         """Aplica modo leitura e timeout quando o dialeto permite."""
         try:
-            if self.dialect == "postgresql":
+            if self.engine_dialect == "postgresql":
                 connection.exec_driver_sql(f"SET statement_timeout = {int(timeout * 1000)}")
-                connection.exec_driver_sql("SET default_transaction_read_only = on")
-            elif self.dialect == "mysql":
+                # SET TRANSACTION vale para a transação corrente (SET
+                # default_transaction_read_only só valeria para as próximas).
+                connection.exec_driver_sql("SET TRANSACTION READ ONLY")
+            elif self.engine_dialect == "mysql":
                 connection.exec_driver_sql(f"SET SESSION MAX_EXECUTION_TIME = {int(timeout * 1000)}")
                 connection.exec_driver_sql("SET SESSION TRANSACTION READ ONLY")
-            elif self.dialect == "sqlite":
+            elif self.engine_dialect == "sqlite":
                 connection.exec_driver_sql("PRAGMA query_only = ON")
         except SQLAlchemyError:
             # Dialetos podem não suportar; a Trava e o usuário read-only continuam valendo.

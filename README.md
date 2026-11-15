@@ -83,6 +83,16 @@ Você escreve:   "quantos clientes existem?"
 - **Script SQL**: `CREATE TABLE` (+ `INSERT INTO` para usar os seus dados).
 - **Conexão**: banco real somente leitura (Postgres/SQLite) direto na aba Dados.
 
+## Conectar a um Postgres
+
+1. Copie `.env.example` para `.env` e preencha `CHATSQL_SEED_URL`.
+2. Aplique o DDL da biblioteca: `.\venv\Scripts\python scripts\apply_ddl.py`
+3. No app: aba **Dados** → **Banco de dados (Postgres/SQLite)** → cole a URL
+   `postgresql+psycopg://usuario:senha@host/banco?sslmode=require`.
+
+Use sempre um usuário **somente leitura** no banco. O schema da biblioteca e o
+porquê de cada restrição estão em [`docs/BANCO.md`](docs/BANCO.md).
+
 ## Como rodar (3 passos)
 
 ```bash
@@ -113,6 +123,7 @@ pytest
 app.py                 Interface Streamlit (Chat, Dados, Configurações)
 chat_sql/
   nl/                  Motor Offline (regras em PT-BR)
+    dialect.py         Diferenças entre SQLite e Postgres
   guard.py             A Trava (só SELECT, colunas existem)
   engine.py            SQLite na memória
   spreadsheet.py       Leitura de planilhas
@@ -120,10 +131,11 @@ chat_sql/
   pipeline.py          Gerar -> validar -> executar
   datasource.py        Interface de Fonte de Dados
   db.py                Conexão somente leitura (SQLite/Postgres)
-schemas/               Schemas de exemplo
+schemas/               Schemas de exemplo (inclui biblioteca-postgres.sql)
 exemplos/              Planilhas de exemplo
+scripts/               Utilitários (apply_ddl.py)
 tests/                 Testes (também servem de especificação)
-docs/                  Arquitetura e decisões (ADRs)
+docs/                  Arquitetura, banco e decisões (ADRs)
 ```
 
 ## Documentação

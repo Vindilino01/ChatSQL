@@ -39,11 +39,13 @@ class ChatSession:
         schema: Schema,
         database: InMemoryDatabase,
         fewshots: list[tuple[str, str]],
+        dialect: str = "sqlite",
     ) -> None:
         self.provider = provider
         self.schema = schema
         self.database = database
         self.fewshots = fewshots
+        self.dialect = dialect
         self.messages: list[dict] = []
         self.attempts_used = 0
         self.last_error: str | None = None
@@ -67,7 +69,7 @@ class ChatSession:
         if not sql:
             self.last_error = getattr(self.provider, "last_reason", "") or "Não entendi a pergunta."
             return None
-        outcome = validate(sql, self.schema)
+        outcome = validate(sql, self.schema, dialect=self.dialect)
         if outcome.ok and outcome.sql:
             return Proposal(sql=outcome.sql, attempts_used=1)
         self.last_error = outcome.error
@@ -78,7 +80,7 @@ class ChatSession:
             raw = self.provider.generate(self.messages)
             self.attempts_used += 1
             sql = clean_sql(raw)
-            outcome = validate(sql, self.schema)
+            outcome = validate(sql, self.schema, dialect=self.dialect)
             if outcome.ok and outcome.sql:
                 return Proposal(sql=outcome.sql, attempts_used=self.attempts_used)
             self.last_error = outcome.error

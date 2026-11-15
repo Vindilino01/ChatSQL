@@ -54,9 +54,12 @@ def test_connect_sqlite_end_to_end(tmp_path):
     assert not app.exception
     assert app.session_state.source_label.startswith("Banco:")
 
-    app.text_input(key="question_input").set_value("quantos clientes existem").run()
+    # Widgets dentro de st.form só enviam o valor no submit: setar e clicar
+    # sem um .run() no meio (que descartaria o valor digitado).
+    app.text_input(key="question_input").set_value("quantos clientes existem")
     app.button(key="FormSubmitter:pergunta_form-Perguntar").click().run()
     execute_keys = [b.key for b in app.button if b.key and b.key.startswith("execute_")]
+    assert execute_keys, "esperava um botao Executar apos a pergunta"
     app.button(key=execute_keys[-1]).click().run()
     assert not app.exception
     assert any(metric.label == "Linhas" for metric in app.metric)
@@ -69,12 +72,14 @@ def test_full_offline_flow():
     app.button(key="load_example").click().run()
     assert any("Fonte ativa" in success.value for success in app.success)
 
-    app.text_input(key="question_input").set_value("quantos clientes existem").run()
+    app.text_input(key="question_input").set_value("quantos clientes existem")
     app.button(key="FormSubmitter:pergunta_form-Perguntar").click().run()
     assert not app.exception
     assert app.code  # SQL gerado
 
-    app.button(key="execute_0").click().run()
+    execute_keys = [b.key for b in app.button if b.key and b.key.startswith("execute_")]
+    assert execute_keys, "esperava um botao Executar apos a pergunta"
+    app.button(key=execute_keys[-1]).click().run()
     assert not app.exception
     assert len(app.dataframe) >= 1
     assert any(metric.label == "Linhas" for metric in app.metric)

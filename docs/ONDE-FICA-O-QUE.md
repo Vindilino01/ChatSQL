@@ -22,6 +22,7 @@ Leia a coluna "O que é isso" sem medo: são explicações simples, sem termo t�
 | A tabela e o gráfico do resultado | `app.py` (função `_render_result`) | Frente C |
 | Dados de exemplo (semente) | `chat_sql/sample_data.py` | Frente D |
 | Schemas prontos de demonstração | `schemas/` | Frente D |
+| O banco da biblioteca (DDL) | `schemas/biblioteca-postgres.sql` + `docs/BANCO.md` | Frente D |
 | Ler planilhas (CSV, Excel) | `chat_sql/spreadsheet.py` | Frente D |
 | Google Sheets e dump `.sql` | `chat_sql/sheets.py` e `chat_sql/sql_dump.py` | Frente D |
 | Guardar fontes e histórico | `chat_sql/store.py` | Frente D |
@@ -50,6 +51,7 @@ Leia a coluna "O que é isso" sem medo: são explicações simples, sem termo t�
 | `nl/lexicon.py` | As palavras que ele conhece (meses, unidades, sinônimos). |
 | `nl/engine.py` | Como ele decide o que a sua pergunta quer. |
 | `nl/builder.py` | Como ele monta o SQL final e junta as tabelas. |
+| `nl/dialect.py` | As diferenças de SQL entre SQLite e Postgres. |
 | `nl/text.py` | Limpa o texto (acentos, plural). |
 | `guard.py` | **A Trava**: só deixa passar consulta de leitura (SELECT). |
 | `engine.py` | Roda a consulta na memória (planilhas e exemplos). |

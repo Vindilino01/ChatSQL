@@ -16,6 +16,9 @@ as formas de entrar com dados: planilhas, Google Sheets e dump `.sql`.
 | Arquivo | O que é |
 |---|---|
 | `schemas/biblioteca.sql` | **A criar**: o banco da biblioteca (livros, autores, exemplares, usuários, empréstimos). |
+| `schemas/biblioteca-postgres.sql` | **Pronto**: o DDL revisado, para Postgres/Neon. |
+| `docs/BANCO.md` | **Pronto**: por que cada restrição e índice existe. |
+| `scripts/apply_ddl.py` | **Pronto**: aplica o DDL no banco do `.env`. |
 | `chat_sql/sample_data.py` | Cria dados de exemplo automaticamente (a função `generate_sample_data`). |
 | `chat_sql/spreadsheet.py` | Lê planilhas CSV, XLSX e XLS. |
 | `chat_sql/sheets.py` | **A implementar**: ler planilha pública do Google Sheets. |
