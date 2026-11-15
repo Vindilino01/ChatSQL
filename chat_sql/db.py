@@ -24,7 +24,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 
-from sqlalchemy import create_engine, inspect
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy import types as sa_types
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
@@ -217,7 +217,9 @@ class DatabaseSource:
         try:
             with self._engine.connect() as connection:
                 self._apply_read_only(connection, timeout)
-                cursor = connection.exec_driver_sql(outcome.sql)
+                # `text()` impede o driver de interpretar os '%' dos LIKE como
+                # marcadores de parâmetro (senão: "only '%s' ... allowed").
+                cursor = connection.execute(text(outcome.sql))
                 fetched = cursor.fetchmany(max_rows + 1)
                 truncated = len(fetched) > max_rows
                 if truncated:

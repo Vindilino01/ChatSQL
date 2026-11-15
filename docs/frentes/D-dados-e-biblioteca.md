@@ -102,6 +102,22 @@ Para cada um, existe um teste-guia pronto. **Remova o `skip`** e faça passar:
 - [ ] `tests/test_sheets.py` e `tests/test_sql_dump.py` passam (sem `skip`).
 - [ ] A demo responde pelo menos 15 perguntas sobre a biblioteca.
 
+## Seed pronto (acervo real)
+
+O script `scripts/seed_biblioteca.py` já popula o banco com **obras, autores e
+editoras reais** (456 obras, 277 autores, 40 editoras) e ~5.300 registros no
+total. Uso:
+
+```powershell
+.\venv\Scripts\python scripts\seed_biblioteca.py
+```
+
+Para medir a acurácia do motor sem IA nesse banco:
+
+```powershell
+.\venv\Scripts\python -m pytest tests/eval/test_biblioteca.py -s
+```
+
 ## Mini-glossário
 
 | Palavra | O que quer dizer |

@@ -92,9 +92,14 @@ contêm Dom".
 **Neon (ou qualquer Postgres gerenciado):**
 ```powershell
 .\venv\Scripts\python scripts\apply_ddl.py
+.\venv\Scripts\python scripts\seed_biblioteca.py     # dados de exemplo
 ```
 O script lê `CHATSQL_SEED_URL` do `.env`, recria as tabelas e imprime um resumo
 (tabelas, índices, restrições, extensões). Nunca imprime a senha.
+
+O seed usa um **acervo real** (obras, autores e editoras que existem) definido em
+`scripts/acervo_biblioteca.py`. Os ISBNs são sintéticos e exemplares, usuários e
+empréstimos são gerados.
 
 > **Atenção:** o script **remove** as tabelas antes de recriar. É intencional
 > durante o desenvolvimento; não rode em produção.

@@ -82,6 +82,18 @@ def test_blocks_unknown_column(tmp_path):
     source.close()
 
 
+def test_like_with_percent_works(tmp_path):
+    """Regressão: o '%' do LIKE não pode ser lido como placeholder do driver."""
+    source = DatabaseSource(DatabaseConfig(url=_make_sqlite(tmp_path)))
+
+    result = source.execute("SELECT nome FROM clientes WHERE nome LIKE '%an%';")
+    assert [row[0] for row in result.rows] == ["Ana"]
+
+    starts = source.execute("SELECT nome FROM clientes WHERE nome LIKE 'An%';")
+    assert [row[0] for row in starts.rows] == ["Ana"]
+    source.close()
+
+
 def test_allowed_tables_filter(tmp_path):
     source = DatabaseSource(
         DatabaseConfig(url=_make_sqlite(tmp_path), allowed_tables=["clientes"])

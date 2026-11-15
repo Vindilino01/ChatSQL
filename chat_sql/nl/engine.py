@@ -45,6 +45,7 @@ class Plan:
     select_all: bool = False
     having: tuple[str, object] | None = None
     group_time: str | None = None  # month, year, day
+    question: str = ""
 
 
 @dataclass
@@ -409,6 +410,9 @@ def _extract_like_filter(question: str, subject: Table) -> Filter | None:
         if not match:
             continue
         value = match.group(1).strip()
+        # Nomes próprios já vêm normalizados (sem acento e minúsculos); usamos
+        # a forma como o usuário digitou seria melhor, mas o texto já passou por
+        # `normalize`, então comparamos sem acento mesmo.
         if not value or value in lex.STOPWORDS:
             continue
         for column in subject.columns:
@@ -583,11 +587,21 @@ def suggest_questions(schema: Schema, limit: int = 6) -> list[str]:
     single = len(tables) == 1
     suggestions: list[str] = []
 
-    for table in tables[:2]:
-        suffix = "" if single else f" de {table.name}"
+    # Tabelas de ligação (só chaves) não rendem boas perguntas para o usuário.
+    def has_content(table: Table) -> bool:
+        non_keys = [
+            column
+            for column in table.columns
+            if not column.primary_key
+            and not column.name.lower().endswith("_id")
+            and not column.name.lower().startswith("id_")
+        ]
+        return bool(non_keys)
 
-        def label() -> str:
-            return _label_column(table).name
+    relevant = [table for table in tables if has_content(table)] or tables
+
+    for table in relevant[:2]:
+        suffix = "" if single else f" de {table.name}"
 
         def numeric() -> str | None:
             for column in table.columns:
@@ -601,20 +615,14 @@ def suggest_questions(schema: Schema, limit: int = 6) -> list[str]:
 
         suggestions.append("Quantos registros existem?" if single else f"Quantos {table.name} existem?")
         suggestions.append(f"Liste os registros{suffix}")
-
-        # "quais editoras existem" -> lista os nomes distintos da tabela
-        suggestions.append(
-            f"Quais {table.name} existem?"
-        )
-
-        value = numeric()
-        if value:
-            suggestions.append(f"Qual o total de {value}?")
+        suggestions.append(f"Quais {table.name} existem?")
 
         text_columns = [
             column
             for column in table.columns
-            if column.type == "TEXT" and not column.primary_key and not column.name.lower().endswith("_id")
+            if column.type == "TEXT"
+            and not column.primary_key
+            and not column.name.lower().endswith("_id")
         ]
         if text_columns:
             suggestions.append(f"Quantos {table.name} por {text_columns[0].name}?")
@@ -774,6 +782,7 @@ class OfflineEngine:
             select_all=select_all,
             having=having,
             group_time=group_time,
+            question=q,
         )
 
         sql = self._build(plan, schema)
@@ -882,12 +891,25 @@ class OfflineEngine:
             group_col = None
             measure = None
 
-        # Ranking ("os 5 maiores ...") sem coluna de ordenação: usa a data.
+        # Ranking ("os 5 maiores ...") sem coluna de ordenação: usa a data ou,
+        # na falta dela, uma coluna de ano (ex.: ano_publicacao).
         if plan.limit and group_col is None and measure is None and plan.order_by is None:
             rank_column = _date_column(plan.subject)
+            if rank_column is None:
+                for column in plan.subject.columns:
+                    name = column.name.lower()
+                    if column.type in ("INTEGER", "REAL") and ("ano" in name or "year" in name):
+                        rank_column = column
+                        break
             if rank_column is not None:
                 plan.order_by = (plan.subject, rank_column)
-                plan.order_desc = True
+                # "mais antigos"/"primeiros" já vem com order_desc=False
+                # detectado; mantemos a direção escolhida pelo usuário.
+                if plan.order_desc is False and not re.search(
+                    r"\b(antigos|antigo|antigas|antiga|primeiros|primeiras|menores|piores)\b",
+                    plan.question,
+                ):
+                    plan.order_desc = True
 
         group_expr = self._group_expression(builder, plan) if group_col is not None else None
         measure_expr = builder.col(measure[0].name, measure[1].name) if measure else None

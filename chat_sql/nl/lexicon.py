@@ -113,6 +113,14 @@ LIKE_PATTERNS = (
     (r"\b(?:contem|contendo|que tenha|inclui|incluindo)\s+[\"']?([a-z0-9_ ]+?)[\"']?$", "contains"),
     (r"\b(?:comeca|comecam|iniciam|inicia) com\s+[\"']?([a-z0-9_ ]+?)[\"']?$", "startswith"),
     (r"\b(?:termina|terminam|acabam|acaba) com\s+[\"']?([a-z0-9_ ]+?)[\"']?$", "endswith"),
+    # "livros com titulo Dom Casmurro", "livros cujo titulo e X"
+    (
+        r"\b(?:com|cujo|cuja|de)\s+(?:o\s+|a\s+)?(?:titulo|nome|descricao|tema|assunto)\s+"
+        r"(?:e\s+|igual a\s+|chamado\s+|chamada\s+)?[\"']?([a-z0-9_ ]+?)[\"']?$",
+        "contains",
+    ),
+    # "livros sobre Machado de Assis"
+    (r"\bsobre\s+[\"']?([a-z0-9_ ]+?)[\"']?$", "contains"),
 )
 
 ORDER_DESC_WORDS = {

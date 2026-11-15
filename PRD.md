@@ -170,14 +170,17 @@ pytest
 
 ## 8. Resultados
 
-> Preencher conforme o roadmap avança (semana 5).
-
 | Métrica | Valor |
 |---------|-------|
-| Acurácia do Motor Offline (biblioteca) | a medir |
-| Acurácia do Motor Offline (e-commerce) | a medir |
-| Perguntas de avaliação | a definir (15-20 por schema) |
-| Testes automatizados | 133 + 6 guias desativados |
+| Acurácia do Motor Offline (biblioteca) | **100% (14/14)** |
+| Acurácia do Motor Offline (e-commerce) | 14/14 no conjunto de casos |
+| Perguntas de avaliação | 14 (biblioteca) + 15 (e-commerce, RH, vendas) |
+| Testes automatizados | 174 + 6 guias desativados |
+| Registros no banco da demo | ~5.300 (456 livros reais, 277 autores, 40 editoras, 744 exemplares, 800 usuários, 2.500 empréstimos) |
+
+O conjunto da biblioteca é medido contra o Postgres real por
+`tests/eval/test_biblioteca.py` (sem IA). O acervo usa **obras, autores e
+editoras reais**; exemplares, usuários e empréstimos são gerados.
 
 ---
 
