@@ -172,6 +172,8 @@ def _related(schema: Schema, subject: Table) -> list[Table]:
 
 def _find_subject(schema: Schema, question: str) -> tuple[Table | None, list[str]]:
     q_forms = question_forms(question)
+    if len(schema.tables) == 1:
+        return next(iter(schema.tables.values())), []
     scored: list[tuple[float, Table]] = []
     for table in schema.tables.values():
         parts = [part for part in re.split(r"[_ ]+", table.name.lower()) if part]
@@ -355,7 +357,7 @@ def _extract_numeric_filter(schema: Schema, question: str, subject: Table, measu
             low = match.group(1).replace(",", ".")
             high = match.group(2).replace(",", ".")
             return Filter("numeric", column[0].name, column[1].name, "between", (low, high))
-    for pattern, _long, short in lex.COMPARISON_PATTERNS:
+    for pattern, long, short in lex.COMPARISON_PATTERNS:
         match = re.search(pattern, question)
         if not match:
             continue
@@ -363,7 +365,8 @@ def _extract_numeric_filter(schema: Schema, question: str, subject: Table, measu
         if column is None:
             return None
         value = match.group(1).replace(",", ".")
-        return Filter("numeric", column[0].name, column[1].name, short, value)
+        operator = long if "ou igual" in match.group(0) else short
+        return Filter("numeric", column[0].name, column[1].name, operator, value)
     return None
 
 
@@ -414,6 +417,9 @@ def _extract_like_filter(question: str, subject: Table) -> Filter | None:
         # a forma como o usuário digitou seria melhor, mas o texto já passou por
         # `normalize`, então comparamos sem acento mesmo.
         if not value or value in lex.STOPWORDS:
+            continue
+        # Rejeita se todos os tokens forem stopwords (ex.: "contem a os")
+        if all(token in lex.STOPWORDS for token in value.split()):
             continue
         for column in subject.columns:
             if column.type == "TEXT" and not column.primary_key and _column_mentioned(column, q_forms):
@@ -791,7 +797,7 @@ class OfflineEngine:
                 None,
                 self._understood(plan),
                 0.3,
-                "Não consegui montar uma Consulta válida para essa pergunta.",
+                "Não encontrei uma coluna numérica para calcular. Tente mencionar o nome da coluna.",
                 self._suggestions(schema),
             )
         return OfflineResult(
@@ -803,11 +809,11 @@ class OfflineEngine:
 
     def _detect_aggregation(self, q: str) -> tuple[str, bool]:
         distinct = _extract_distinct(q)
-        if re.search(r"\b(quantos|quantas|contagem|numero de)\b", q):
+        if re.search(r"\b(quantos|quantas|contagem|numero de|conte|contar)\b", q):
             return "count", distinct
-        if re.search(r"\b(media|medias|medio|medios)\b", q):
+        if re.search(r"\b(media|medias|medio|medios|calcule a media|calcule a media de)\b", q):
             return "avg", distinct
-        if re.search(r"\b(soma|somatorio|total|faturamento|receita|montante|quanto|quanta)\b", q) or "valor total" in q:
+        if re.search(r"\b(soma|somatorio|total|faturamento|receita|montante|quanto|quanta|some|somar|montante total)\b", q) or "valor total" in q or "quanto foi" in q or "me diga o total" in q or "calcule o total" in q:
             return "sum", distinct
         if re.search(r"\b(maior|maiores|maximo|maximos|mais caro|mais caros|mais alto|mais altos)\b", q) and not re.search(r"maior(es)? que", q):
             return "max", distinct
@@ -865,16 +871,10 @@ class OfflineEngine:
         measure = plan.measure
 
         # Agregação pedida ("maior", "total"...) sem uma coluna que possa ser
-        # medida (ex.: "maiores por ano_publicacao"). Nesse caso, a intenção
-        # real é ordenar/listar por essa coluna, não somar.
+        # medida (ex.: "maiores por ano_publicacao"). Nesse caso, não é possível
+        # calcular a agregação — retorna None para que _analyze exiba erro claro.
         if plan.intent in ("sum", "avg", "min", "max") and measure is None:
-            plan.intent = "list"
-            if plan.order_by is None and group_col is not None:
-                plan.order_by = group_col
-                if plan.intent != "list":
-                    pass
-                plan.order_desc = True
-            group_col = None
+            return None
 
         # Se o motor escolheu a MESMA coluna para agrupar e para medir, a
         # consulta viraria "SELECT x, SUM(x) GROUP BY x" — sem sentido.
@@ -903,6 +903,7 @@ class OfflineEngine:
                         break
             if rank_column is not None:
                 plan.order_by = (plan.subject, rank_column)
+                builder.ensure(plan.subject.name)
                 # "mais antigos"/"primeiros" já vem com order_desc=False
                 # detectado; mantemos a direção escolhida pelo usuário.
                 if plan.order_desc is False and not re.search(

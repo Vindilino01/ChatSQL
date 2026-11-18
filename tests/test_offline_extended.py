@@ -225,3 +225,220 @@ def test_multi_hop_join_path():
     assert builder.ensure("pais")
     assert builder.col("pais", "nome") is not None
     assert builder.join_clause().count("JOIN") == 2
+
+
+# ---------------------------------------------------------------------------
+# Defeito 1 — _detect_aggregation: novas palavras para count / sum / avg
+# ---------------------------------------------------------------------------
+
+def _single_table_schema():
+    return parse_schema(
+        "CREATE TABLE vendas (id INTEGER PRIMARY KEY, produto TEXT, valor REAL, quantidade INTEGER);"
+    )
+
+
+def test_detect_aggregation_conte():
+    schema = _single_table_schema()
+    engine = OfflineEngine()
+    sql = engine.generate_sql("conte quantas vendas existem", schema)
+    assert sql and "COUNT" in sql
+
+
+def test_detect_aggregation_contar():
+    schema = _single_table_schema()
+    engine = OfflineEngine()
+    sql = engine.generate_sql("quero contar os registros de vendas", schema)
+    assert sql and "COUNT" in sql
+
+
+def test_detect_aggregation_some():
+    schema = _single_table_schema()
+    engine = OfflineEngine()
+    sql = engine.generate_sql("some os valores das vendas", schema)
+    assert sql and "SUM" in sql
+
+
+def test_detect_aggregation_somar():
+    schema = _single_table_schema()
+    engine = OfflineEngine()
+    sql = engine.generate_sql("preciso somar o valor total das vendas", schema)
+    assert sql and "SUM" in sql
+
+
+def test_detect_aggregation_quanto_foi():
+    schema = _single_table_schema()
+    engine = OfflineEngine()
+    sql = engine.generate_sql("quanto foi o valor total das vendas", schema)
+    assert sql and "SUM" in sql
+
+
+def test_detect_aggregation_me_diga_o_total():
+    schema = _single_table_schema()
+    engine = OfflineEngine()
+    sql = engine.generate_sql("me diga o total do valor das vendas", schema)
+    assert sql and "SUM" in sql
+
+
+def test_detect_aggregation_calcule_o_total():
+    schema = _single_table_schema()
+    engine = OfflineEngine()
+    sql = engine.generate_sql("calcule o total do valor", schema)
+    assert sql and "SUM" in sql
+
+
+def test_detect_aggregation_montante_total():
+    schema = _single_table_schema()
+    engine = OfflineEngine()
+    sql = engine.generate_sql("qual o montante total do valor das vendas", schema)
+    assert sql and "SUM" in sql
+
+
+def test_detect_aggregation_calcule_a_media():
+    schema = _single_table_schema()
+    engine = OfflineEngine()
+    sql = engine.generate_sql("calcule a media do valor das vendas", schema)
+    assert sql and "AVG" in sql
+
+
+def test_detect_aggregation_calcule_a_media_de():
+    schema = _single_table_schema()
+    engine = OfflineEngine()
+    sql = engine.generate_sql("calcule a media de valor", schema)
+    assert sql and "AVG" in sql
+
+
+# ---------------------------------------------------------------------------
+# Defeito 2 — _find_subject: fallback de tabela única antes do loop
+# ---------------------------------------------------------------------------
+
+def test_single_table_fallback_with_no_table_name_in_question():
+    """Pergunta sem o nome da tabela deve funcionar quando há só uma tabela."""
+    schema = parse_schema(
+        "CREATE TABLE planilha_exportacao (id INTEGER PRIMARY KEY, valor REAL, regiao TEXT);"
+    )
+    engine = OfflineEngine()
+    # "registros" não é o nome da tabela — antes do fix, o loop não encontrava
+    # e o fallback só agia quando scored estava vazio, mas o early return agora
+    # garante que a tabela é escolhida imediatamente.
+    sql = engine.generate_sql("quantos registros existem aqui", schema)
+    assert sql and "COUNT" in sql
+
+
+def test_single_table_name_collision_resolved_immediately():
+    """Com uma tabela só, mesmo que a pergunta mencione algo que poderia ser
+    outra tabela, o motor deve resolver sem ambiguidade."""
+    schema = parse_schema(
+        "CREATE TABLE dados (id INTEGER PRIMARY KEY, cliente TEXT, total REAL);"
+    )
+    engine = OfflineEngine()
+    result = OfflineEngine().analyze("liste os dados de cliente", schema)
+    assert result.sql is not None, result.error
+    assert result.ambiguous == []
+
+
+# ---------------------------------------------------------------------------
+# Defeito 3 — COMPARISON_PATTERNS: "ou igual" deve produzir >= / <=
+# ---------------------------------------------------------------------------
+
+def test_maior_ou_igual_uses_gte(ecommerce):
+    sql = _sql_for("Liste os produtos com preco maior ou igual a 100.", ecommerce)
+    assert ">= 100" in sql or ">=100" in sql
+
+
+def test_menor_ou_igual_uses_lte(ecommerce):
+    sql = _sql_for("Liste os produtos com estoque menor ou igual a 50.", ecommerce)
+    assert "<= 50" in sql or "<=50" in sql
+
+
+def test_maior_sem_ou_igual_uses_gt(ecommerce):
+    sql = _sql_for("Liste os produtos com estoque maior que 500.", ecommerce)
+    assert "> 500" in sql or ">500" in sql
+    assert ">=" not in sql
+
+
+def test_menor_sem_ou_igual_uses_lt(ecommerce):
+    sql = _sql_for("Liste os produtos com preco menor que 50.", ecommerce)
+    assert "< 50" in sql or "<50" in sql
+    assert "<=" not in sql
+
+
+# ---------------------------------------------------------------------------
+# Defeito 4 — _build: sem coluna numérica retorna None com mensagem clara
+# ---------------------------------------------------------------------------
+
+def test_no_numeric_column_returns_error_message():
+    """Quando o intent é sum/avg/min/max e nenhuma coluna numérica existe,
+    o motor deve retornar um erro com mensagem orientativa, não SQL silencioso."""
+    schema = parse_schema(
+        "CREATE TABLE categorias (id INTEGER PRIMARY KEY, nome TEXT, descricao TEXT);"
+    )
+    engine = OfflineEngine()
+    result = engine.analyze("qual o total das categorias", schema)
+    assert result.sql is None
+    assert "coluna" in result.error.lower() or "numérica" in result.error.lower() or "calcular" in result.error.lower()
+
+
+def test_no_numeric_column_error_mentions_column():
+    """Mensagem de erro deve orientar o usuário a mencionar a coluna."""
+    schema = parse_schema(
+        "CREATE TABLE tags (id INTEGER PRIMARY KEY, nome TEXT);"
+    )
+    result = OfflineEngine().analyze("some as tags", schema)
+    assert result.sql is None
+    assert result.error
+
+
+# ---------------------------------------------------------------------------
+# Defeito 5 — _build: ensure antes de builder.col() no bloco de ranking
+# ---------------------------------------------------------------------------
+
+def test_top_n_ranking_without_explicit_column():
+    """'os 5 mais antigos' dispara o bloco de ranking que atribui plan.order_by
+    para uma coluna de data/ano; builder.ensure deve ser chamado antes de
+    builder.col() para essa tabela."""
+    schema = parse_schema(
+        "CREATE TABLE livros (id INTEGER PRIMARY KEY, titulo TEXT, ano_publicacao INTEGER);"
+    )
+    engine = OfflineEngine()
+    sql = engine.generate_sql("os 5 livros mais antigos", schema)
+    assert sql, engine.last_reason
+    assert "LIMIT 5" in sql
+    assert "ORDER BY" in sql
+
+
+def test_top_n_ranking_produces_valid_sql():
+    """O SQL gerado pelo ranking deve ser estruturalmente válido."""
+    schema = parse_schema(
+        "CREATE TABLE filmes (id INTEGER PRIMARY KEY, titulo TEXT, ano INTEGER, nota REAL);"
+    )
+    engine = OfflineEngine()
+    sql = engine.generate_sql("os 3 filmes mais recentes", schema)
+    assert sql, engine.last_reason
+    assert "LIMIT 3" in sql
+
+
+# ---------------------------------------------------------------------------
+# Defeito 6 — _extract_like_filter: valor composto só de stopwords retorna None
+# ---------------------------------------------------------------------------
+
+def test_like_filter_stopwords_only_does_not_produce_filter():
+    """'contem a os' — todos os tokens são stopwords; não deve gerar LIKE."""
+    schema = parse_schema(
+        "CREATE TABLE produtos (id INTEGER PRIMARY KEY, nome TEXT, descricao TEXT);"
+    )
+    engine = OfflineEngine()
+    sql = engine.generate_sql("liste os produtos que contem a os", schema)
+    # Deve gerar SQL (listagem simples), mas sem cláusula LIKE com stopwords
+    assert sql
+    assert "LIKE '% a os%'" not in sql
+    assert "LIKE '%a os%'" not in sql
+
+
+def test_like_filter_valid_value_still_works():
+    """Valor com conteúdo real deve continuar gerando LIKE normalmente."""
+    schema = parse_schema(
+        "CREATE TABLE produtos (id INTEGER PRIMARY KEY, nome TEXT, descricao TEXT);"
+    )
+    engine = OfflineEngine()
+    sql = engine.generate_sql("liste os produtos que contem notebook", schema)
+    assert sql and "LIKE '%notebook%'" in sql
