@@ -54,47 +54,139 @@ def _canonical_type(sa_type) -> str:
     return "TEXT"
 
 
+# Custo em idas e voltas de rede: a intropecção em massa faz 1 consulta por
+# aspecto (tabelas, colunas, PKs, FKs) em vez de 3 por tabela. Em banco remoto
+# isso é a diferença entre 21 idas e voltas e 4.
 def _introspect(engine: Engine, schema_name: str | None = None) -> Schema:
-    """Lê o banco e monta o Schema da Sessão (tabelas, colunas e FKs)."""
-    inspector = inspect(engine)
+    """Lê o banco e monta o Schema da Sessão (tabelas, colunas e FKs).
+
+    Usa consultas em massa ao catálogo (uma por aspecto), em vez de chamar o
+    inspetor do SQLAlchemy tabela por tabela. Um banco com 20 tabelas passa de
+    60 idas e voltas para 4.
+    """
+    schema = schema_name or "public"
+    dialect = engine.dialect.name
+
+    with engine.connect() as conn:
+        if dialect == "postgresql":
+            tabelas = [row[0] for row in conn.exec_driver_sql(
+                "SELECT table_name FROM information_schema.tables "
+                "WHERE table_schema = %s AND table_type = 'BASE TABLE' "
+                "ORDER BY table_name",
+                (schema,),
+            )]
+            colunas = conn.exec_driver_sql(
+                """
+                SELECT table_name, column_name, data_type, is_nullable, ordinal_position
+                FROM information_schema.columns
+                WHERE table_schema = %s
+                ORDER BY table_name, ordinal_position
+                """,
+                (schema,),
+            ).fetchall()
+            pks = conn.exec_driver_sql(
+                """
+                SELECT tc.table_name, kcu.column_name
+                FROM information_schema.table_constraints tc
+                JOIN information_schema.key_column_usage kcu
+                  ON kcu.constraint_name = tc.constraint_name
+                 AND kcu.table_schema = tc.table_schema
+                WHERE tc.table_schema = %s AND tc.constraint_type = 'PRIMARY KEY'
+                """,
+                (schema,),
+            ).fetchall()
+            fks = conn.exec_driver_sql(
+                """
+                SELECT kcu.table_name, kcu.column_name,
+                       ccu.table_name, ccu.column_name
+                FROM information_schema.table_constraints tc
+                JOIN information_schema.key_column_usage kcu
+                  ON kcu.constraint_name = tc.constraint_name
+                 AND kcu.table_schema = tc.table_schema
+                JOIN information_schema.constraint_column_usage ccu
+                  ON ccu.constraint_name = tc.constraint_name
+                 AND ccu.table_schema = tc.table_schema
+                WHERE tc.table_schema = %s AND tc.constraint_type = 'FOREIGN KEY'
+                """,
+                (schema,),
+            ).fetchall()
+            pk_map: dict[str, set[str]] = {}
+            for tabela, coluna in pks:
+                pk_map.setdefault(tabela, set()).add(coluna)
+            fk_map: dict[str, list[tuple[str, str, str]]] = {}
+            for origem, origem_col, destino, destino_col in fks:
+                fk_map.setdefault(origem, []).append((origem_col, destino, destino_col))
+        else:
+            # Fallback (SQLite nos testes): usa o inspetor, que é barato local.
+            inspector = inspect(engine)
+            tabelas = inspector.get_table_names(schema=schema_name)
+            colunas = []
+            pk_map = {}
+            fk_map = {}
+            for tabela in tabelas:
+                for coluna in inspector.get_columns(tabela, schema=schema_name):
+                    colunas.append(
+                        (tabela, coluna["name"], coluna["type"].__class__.__name__.lower(),
+                         "YES" if coluna.get("nullable", True) else "NO", 0)
+                    )
+                pk_map[tabela] = set(
+                    inspector.get_pk_constraint(tabela, schema=schema_name).get("constrained_columns") or []
+                )
+                for fk in inspector.get_foreign_keys(tabela, schema=schema_name):
+                    for c, r in zip(fk.get("constrained_columns") or (), fk.get("referred_columns") or ()):
+                        fk_map.setdefault(tabela, []).append((c, fk.get("referred_table"), r))
+
+    return _montar_schema(tabelas, colunas, pk_map, fk_map)
+
+
+_TIPO_CANONICO = {
+    "bigint": "INTEGER", "integer": "INTEGER", "smallint": "INTEGER", "int": "INTEGER",
+    "numeric": "REAL", "double precision": "REAL", "real": "REAL", "money": "REAL",
+    "boolean": "BOOLEAN", "bool": "BOOLEAN",
+    "date": "DATE",
+    "timestamp with time zone": "TIMESTAMP", "timestamp without time zone": "TIMESTAMP",
+    "datetime": "TIMESTAMP",
+    "bytea": "BLOB", "blob": "BLOB",
+}
+
+
+def _montar_schema(tabelas, colunas, pk_map, fk_map) -> Schema:
+    """Monta o Schema a partir dos dados já lidos do catálogo."""
+    por_tabela: dict[str, list[tuple[str, str, bool]]] = {t: [] for t in tabelas}
+    for tabela, nome, tipo, nullable, _pos in colunas:
+        if tabela in por_tabela:
+            por_tabela[tabela].append((nome, tipo, nullable == "NO"))
+
     tables: dict[str, Table] = {}
     ddl_parts: list[str] = []
 
-    for table_name in inspector.get_table_names(schema=schema_name):
-        primary_keys = set(
-            inspector.get_pk_constraint(table_name, schema=schema_name).get("constrained_columns") or []
-        )
-        columns: list[Column] = []
+    for tabela in tabelas:
+        pk_cols = pk_map.get(tabela, set())
+        cols: list[Column] = []
         ddl_lines: list[str] = []
-        for column in inspector.get_columns(table_name, schema=schema_name):
-            canonical = _canonical_type(column["type"])
-            columns.append(
+        for nome, tipo, obrigatoria in por_tabela.get(tabela, []):
+            canonico = _TIPO_CANONICO.get(str(tipo).lower(), "TEXT")
+            cols.append(
                 Column(
-                    name=column["name"],
-                    type=canonical,
-                    not_null=not column.get("nullable", True),
-                    primary_key=column["name"] in primary_keys,
+                    name=nome,
+                    type=canonico,
+                    not_null=obrigatoria,
+                    primary_key=nome in pk_cols,
                 )
             )
-            ddl_lines.append(f'    "{column["name"]}" {canonical}')
+            ddl_lines.append(f'    "{nome}" {canonico}')
 
-        foreign_keys: list[ForeignKey] = []
-        for fk in inspector.get_foreign_keys(table_name, schema=schema_name):
-            referred_table = fk.get("referred_table") or ""
-            constrained = tuple(fk.get("constrained_columns") or ())
-            referred_columns = tuple(fk.get("referred_columns") or ())
-            if not referred_table or not constrained:
+        fks: list[ForeignKey] = []
+        for coluna, destino, destino_col in fk_map.get(tabela, []):
+            if not destino:
                 continue
-            foreign_keys.append(
-                ForeignKey(columns=constrained, ref_table=referred_table, ref_columns=referred_columns)
-            )
+            fks.append(ForeignKey(columns=(coluna,), ref_table=destino, ref_columns=(destino_col,)))
             ddl_lines.append(
-                f'    FOREIGN KEY ({", ".join(constrained)}) '
-                f'REFERENCES "{referred_table}" ({", ".join(referred_columns)})'
+                f'    FOREIGN KEY ("{coluna}") REFERENCES "{destino}" ("{destino_col}")'
             )
 
-        tables[table_name.lower()] = Table(name=table_name, columns=columns, foreign_keys=foreign_keys)
-        ddl_parts.append(f'CREATE TABLE "{table_name}" (\n' + ",\n".join(ddl_lines) + "\n);")
+        tables[tabela.lower()] = Table(name=tabela, columns=cols, foreign_keys=fks)
+        ddl_parts.append(f'CREATE TABLE "{tabela}" (\n' + ",\n".join(ddl_lines) + "\n);")
 
     ddl = "\n\n".join(ddl_parts)
     return Schema(raw_ddl=ddl, normalized_ddl=ddl, tables=tables)
@@ -117,15 +209,43 @@ class DatabaseSource:
 
     def __init__(self, config: DatabaseConfig) -> None:
         self._config = config
+        self._conexao_ativa = None
+        postgres = config.url.startswith(("postgresql", "postgres"))
+
         connect_args: dict = {}
-        # No Postgres, abre todas as conexões já em modo leitura. A Trava é a
-        # primeira barreira; isto é a segunda, no nível do servidor.
-        if config.url.startswith(("postgresql", "postgres")):
+        if postgres:
+            # O pooler do Neon recusa `statement_timeout` nos parâmetros de
+            # startup; só `default_transaction_read_only` é aceito lá.
             connect_args["options"] = "-c default_transaction_read_only=on"
+            connect_args["connect_timeout"] = 20
+            connect_args["application_name"] = "chatsql"
+
         try:
             self._engine = create_engine(
-                config.url, pool_pre_ping=True, connect_args=connect_args
+                config.url,
+                # `pre_ping` custa uma ida e volta por consulta; `recycle`
+                # resolve conexões mortas com bem menos overhead.
+                pool_pre_ping=False,
+                pool_size=5,
+                max_overflow=5,
+                pool_recycle=300,
+                connect_args=connect_args,
             )
+            if postgres:
+                # Os SETs valem por conexão e são aplicados uma única vez,
+                # no momento em que ela nasce — não a cada consulta.
+                from sqlalchemy import event
+
+                @event.listens_for(self._engine, "connect")
+                def _ao_conectar(dbapi_conn, _record):  # pragma: no cover - infra
+                    try:
+                        cursor = dbapi_conn.cursor()
+                        cursor.execute(f"SET statement_timeout = {int(QUERY_TIMEOUT_SECONDS * 1000)}")
+                        cursor.execute("SET TRANSACTION READ ONLY")
+                        cursor.close()
+                    except Exception:
+                        pass
+
             with self._engine.connect() as connection:
                 connection.exec_driver_sql("SELECT 1")
         except SQLAlchemyError as exc:
@@ -186,12 +306,12 @@ class DatabaseSource:
         return _SQLGLOT_DIALECT.get(self.engine_dialect, "sqlite")
 
     def _apply_read_only(self, connection, timeout: float) -> None:
-        """Aplica modo leitura e timeout quando o dialeto permite."""
+        """Garante modo leitura. No Postgres o timeout já vem do evento connect."""
         try:
             if self.engine_dialect == "postgresql":
-                connection.exec_driver_sql(f"SET statement_timeout = {int(timeout * 1000)}")
-                # SET TRANSACTION vale para a transação corrente (SET
-                # default_transaction_read_only só valeria para as próximas).
+                # O `SET TRANSACTION READ ONLY` já foi aplicado no connect.
+                # Reforçamos o modo leitura da transação corrente sem repetir
+                # o statement_timeout (que custa uma ida e volta por consulta).
                 connection.exec_driver_sql("SET TRANSACTION READ ONLY")
             elif self.engine_dialect == "mysql":
                 connection.exec_driver_sql(f"SET SESSION MAX_EXECUTION_TIME = {int(timeout * 1000)}")
@@ -215,18 +335,28 @@ class DatabaseSource:
 
         started = time.monotonic()
         try:
-            with self._engine.connect() as connection:
+            # Reutiliza a mesma conexão entre consultas. Abrir e fechar uma
+            # conexão a cada pergunta custa ~0,45 s num banco remoto — mais que
+            # a própria consulta.
+            connection = self._conexao_ativa
+            if connection is None or connection.closed:
+                connection = self._engine.connect()
+                self._conexao_ativa = connection
                 self._apply_read_only(connection, timeout)
-                # `text()` impede o driver de interpretar os '%' dos LIKE como
-                # marcadores de parâmetro (senão: "only '%s' ... allowed").
-                cursor = connection.execute(text(outcome.sql))
-                fetched = cursor.fetchmany(max_rows + 1)
-                truncated = len(fetched) > max_rows
-                if truncated:
-                    fetched = fetched[:max_rows]
-                columns = list(cursor.keys()) if cursor.returns_rows else []
-                rows = [tuple(row) for row in fetched]
+
+            # `text()` impede o driver de interpretar os '%' dos LIKE como
+            # marcadores de parâmetro (senão: "only '%s' ... allowed").
+            cursor = connection.execute(text(outcome.sql))
+            fetched = cursor.fetchmany(max_rows + 1)
+            truncated = len(fetched) > max_rows
+            if truncated:
+                fetched = fetched[:max_rows]
+            columns = list(cursor.keys()) if cursor.returns_rows else []
+            rows = [tuple(row) for row in fetched]
         except SQLAlchemyError as exc:
+            # Em caso de erro, descarta a conexão: o estado da transação pode
+            # ter ficado inválido.
+            self._descartar_conexao()
             message = str(exc)
             lowered = message.lower()
             if "timeout" in lowered or "canceling statement" in lowered or "interrupted" in lowered:
@@ -236,5 +366,15 @@ class DatabaseSource:
         elapsed = (time.monotonic() - started) * 1000
         return QueryResult(columns=columns, rows=rows, truncated=truncated, elapsed_ms=elapsed)
 
+    def _descartar_conexao(self) -> None:
+        connection = getattr(self, "_conexao_ativa", None)
+        if connection is not None:
+            try:
+                connection.close()
+            except Exception:
+                pass
+        self._conexao_ativa = None
+
     def close(self) -> None:
+        self._descartar_conexao()
         self._engine.dispose()

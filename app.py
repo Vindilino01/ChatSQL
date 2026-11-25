@@ -9,6 +9,7 @@ from __future__ import annotations
 import html
 import os
 import re
+import time
 from pathlib import Path
 
 import pandas as pd
@@ -53,9 +54,9 @@ MAX_TURNS = 20
 
 CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
-html, body, [class*="css"] { font-family: 'Inter', system-ui, sans-serif; }
+html, body, [class*="css"] { font-family: 'IBM Plex Sans', system-ui, sans-serif; }
 
 .stApp {
   background:
@@ -100,12 +101,23 @@ section[data-testid="stSidebar"] {
   padding: 12px 16px; border-radius: 16px 16px 4px 16px; margin: 10px 0 8px auto;
   max-width: 78%; width: fit-content; font-weight: 500; box-shadow: 0 8px 24px rgba(79,70,229,0.28); }
 
-.chs-answer { color: #8b93a7; font-size: 12px; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.08em; margin: 6px 0; }
+/* A resposta: o número e o rótulo na mesma linha, sem competir com metadados. */.chs-scalar { display: flex; align-items: baseline; gap: 14px;
+  padding: 18px 4px 10px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.chs-scalar-value { font-size: 58px; font-weight: 700; line-height: 1;
+  letter-spacing: -0.03em; color: #f4f5fa;
+  font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+.chs-scalar-label { font-size: 14px; font-weight: 500; color: #8b93a7;
+  padding-bottom: 6px; }
 
-div[data-testid="stMetric"] { background: rgba(255,255,255,0.035);
-  border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 10px 14px; }
-div[data-testid="stMetricValue"] { font-size: 22px; }
+.chs-facts { display: flex; flex-wrap: wrap; gap: 28px;
+  padding: 16px 4px 12px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.chs-fact { display: flex; flex-direction: column; gap: 3px; }
+.chs-fact-key { font-size: 14px; font-weight: 500; color: #8b93a7; }
+.chs-fact-value { font-size: 20px; font-weight: 600; color: #f4f5fa;
+  font-variant-numeric: tabular-nums; }
+
+/* Metadados: discretos. Nunca competem com a resposta. */
+div[data-testid="stCaptionContainer"] { color: #6f7585; }
 
 .stButton > button { border-radius: 10px; font-weight: 600; }
 .stButton > button[kind="primary"] {
@@ -113,7 +125,7 @@ div[data-testid="stMetricValue"] { font-size: 22px; }
 .stButton > button[kind="primary"]:hover { filter: brightness(1.1); }
 
 div[data-testid="stCodeBlock"] { border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); }
-div[data-testid="stCodeBlock"] code, .stCode code { font-family: 'JetBrains Mono', monospace !important; }
+div[data-testid="stCodeBlock"] code, .stCode code { font-family: 'IBM Plex Mono', monospace !important; }
 
 .stTabs [data-baseweb="tab-list"] { gap: 6px; }
 .stTabs [data-baseweb="tab"] { border-radius: 10px; padding: 6px 14px; }
@@ -430,13 +442,28 @@ def _connect_database() -> None:
         return
     allowed_text = st.session_state.get("db_tables") or ""
     allowed = [name.strip() for name in allowed_text.split(",") if name.strip()]
+
+    # Dentro do spinner, cada etapa diz o que está acontecendo: o banco remoto
+    # leva alguns segundos para acordar e ler a estrutura.
+    inicio = time.monotonic()
     try:
-        source = DatabaseSource(DatabaseConfig(url=url, allowed_tables=allowed))
+        with st.spinner("Conectando ao banco..."):
+            source = DatabaseSource(DatabaseConfig(url=url, allowed_tables=allowed))
+            schema = source.schema
+            if schema.tables:
+                st.caption(f"Estrutura lida: {len(schema.tables)} tabelas")
     except QueryError as exc:
         st.error(f"Não consegui conectar: {exc}")
+        st.caption(
+            "Verifique se a URL está completa, se a senha está certa e se o host "
+            "aceita conexões de fora. O banco pode estar acordando — tente de novo."
+        )
+        return
+    except Exception as exc:  # nunca derruba a página
+        st.error(f"Erro inesperado ao conectar: {exc}")
         return
 
-    schema = source.schema
+    decorrido = time.monotonic() - inicio
     if not schema.tables:
         st.error("A conexão funcionou, mas nenhuma tabela foi encontrada.")
         missing = getattr(source, "missing_tables", None)
@@ -472,7 +499,10 @@ def _connect_database() -> None:
     st.session_state.turns = []
     if "src" in st.query_params:
         del st.query_params["src"]
-    _flash("success", "Fonte ativa: banco de dados (somente leitura).")
+    _flash(
+        "success",
+        f"Fonte ativa: banco de dados (somente leitura) — conectado em {decorrido:.1f}s.",
+    )
     st.rerun()
 
 
@@ -719,20 +749,54 @@ def _render_recent() -> None:
                 st.session_state.pending_question = question
 
 
+def _formatar_valor(valor) -> str:
+    """Formata número para leitura humana (sem perder precisão)."""
+    if valor is None:
+        return "—"
+    if isinstance(valor, float):
+        if valor.is_integer():
+            return f"{int(valor):,}".replace(",", ".")
+        return f"{valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    if isinstance(valor, int):
+        return f"{valor:,}".replace(",", ".")
+    return str(valor)
+
+
 def _render_result(turn: dict, index: int) -> None:
     frame = pd.DataFrame(turn["rows"], columns=turn["columns"])
     if frame.empty:
         st.info("A Consulta rodou sem erros, mas não retornou nenhuma linha.")
         return
-    metrics = st.columns(3)
-    metrics[0].metric("Linhas", len(frame))
-    metrics[1].metric("Colunas", len(frame.columns))
-    metrics[2].metric("Tempo", f"{turn['elapsed']:.0f} ms")
-    st.dataframe(frame, width="stretch", hide_index=True)
+
+    linhas, colunas = len(frame), len(frame.columns)
+    tempo_ms = turn["elapsed"]
+
+    # A resposta é o elemento principal. Metadados são rodapé, não cards.
+    if linhas == 1 and colunas == 1:
+        # Escalar: o número responde a pergunta. Nada compete com ele.
+        valor = _formatar_valor(frame.iloc[0, 0])
+        rotulo = frame.columns[0].replace("_", " ")
+        st.markdown(
+            f'<div class="chs-scalar">'
+            f'<span class="chs-scalar-value">{html.escape(valor)}</span>'
+            f'<span class="chs-scalar-label">{html.escape(rotulo)}</span>'
+            f"</div>",
+            unsafe_allow_html=True,
+        )
+    elif linhas == 1:
+        # Ficha: uma linha com várias colunas não é tabela, é chave-valor.
+        pares = "".join(
+            f'<div class="chs-fact"><span class="chs-fact-key">{html.escape(str(col))}</span>'
+            f'<span class="chs-fact-value">{html.escape(_formatar_valor(frame.iloc[0][col]))}</span></div>'
+            for col in frame.columns
+        )
+        st.markdown(f'<div class="chs-facts">{pares}</div>', unsafe_allow_html=True)
+    else:
+        st.dataframe(frame, width="stretch", hide_index=True)
 
     numeric = (
-        len(frame.columns) == 2
-        and len(frame) > 1
+        colunas == 2
+        and linhas > 1
         and pd.api.types.is_numeric_dtype(frame[frame.columns[1]])
     )
     if numeric:
@@ -743,28 +807,39 @@ def _render_result(turn: dict, index: int) -> None:
             st.bar_chart(frame, x=frame.columns[0], y=frame.columns[1], height=280)
         elif chart == "Linha":
             st.line_chart(frame, x=frame.columns[0], y=frame.columns[1], height=280)
-        elif chart == "Area":
+        elif chart == "Área":
             st.area_chart(frame, x=frame.columns[0], y=frame.columns[1], height=280)
 
     if turn.get("truncated"):
         st.warning(f"Resultado limitado as primeiras {DISPLAY_ROWS} linhas.")
-    downloads = st.columns(2)
-    downloads[0].download_button(
-        "Baixar CSV",
+
+    # Rodapé discreto: o que importa é a resposta, não a telemetria.
+    detalhes = [f"{linhas} linha" + ("s" if linhas != 1 else "")]
+    if linhas > 1:
+        detalhes.append(f"{colunas} coluna" + ("s" if colunas != 1 else ""))
+    if tempo_ms >= 1000:
+        detalhes.append(f"{tempo_ms / 1000:.1f} s")
+    else:
+        detalhes.append(f"{tempo_ms:.0f} ms")
+
+    rodape = st.columns([3, 1, 1])
+    rodape[0].caption(" · ".join(detalhes))
+    rodape[1].download_button(
+        "CSV",
         frame.to_csv(index=False).encode("utf-8"),
         file_name="resultado.csv",
         mime="text/csv",
         key=f"download_{index}",
-        width="stretch",
+        type="tertiary",
     )
     if turn.get("sql"):
-        downloads[1].download_button(
-            "Baixar SQL",
+        rodape[2].download_button(
+            "SQL",
             turn["sql"],
             file_name="consulta.sql",
             mime="text/plain",
             key=f"sql_download_{index}",
-            width="stretch",
+            type="tertiary",
         )
 
 
@@ -788,7 +863,6 @@ def _render_turn(turn: dict, index: int, is_last: bool) -> None:
             st.caption("Tente algo como: " + " | ".join(suggestions))
         return
 
-    st.markdown('<div class="chs-answer">Consulta SQL</div>', unsafe_allow_html=True)
     st.code(turn["sql"], language="sql")
     if turn.get("explanation"):
         st.caption(f"→ {turn['explanation']}")

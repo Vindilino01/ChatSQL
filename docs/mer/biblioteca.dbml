@@ -1,0 +1,58 @@
+// Biblioteca Universitária — cole em https://dbdiagram.io
+
+Table autor {
+  id_autor bigint [pk] [note: 'Identificador único do autor.']
+  nome varchar(120) [not null] [note: 'Nome do autor.']
+  nacionalidade varchar(60) [note: 'País de origem do autor.']
+}
+
+Table editora {
+  id_editora bigint [pk] [note: 'Identificador único da editora.']
+  nome varchar(120) [not null, unique] [note: 'Razão social.']
+  pais varchar(60) [not null] [note: 'País de origem.']
+}
+
+Table emprestimo {
+  id_emprestimo bigint [pk] [note: 'Identificador único do empréstimo.']
+  id_usuario bigint [not null] [note: 'Quem retirou.']
+  id_exemplar bigint [not null] [note: 'Qual cópia foi retirada.']
+  data_emprestimo date [not null] [note: 'Data da retirada.']
+  data_prevista_devolucao date [not null] [note: 'Prazo combinado (posterior à retirada).']
+  data_devolucao date [note: 'Quando devolveu. Vazio = ainda emprestado.']
+}
+
+Table exemplar {
+  id_exemplar bigint [pk] [note: 'Identificador único da cópia física.']
+  codigo_patrimonio varchar(30) [not null, unique] [note: 'Etiqueta de patrimônio colada no livro.']
+  id_livro bigint [not null] [note: 'Qual obra esta cópia representa.']
+  estado_conservacao varchar(20) [not null] [note: 'bom · danificado · em_manutencao · extraviado · descartado.']
+}
+
+Table livro {
+  id_livro bigint [pk] [note: 'Identificador único da obra.']
+  titulo varchar(200) [not null] [note: 'Título da obra.']
+  isbn varchar(13) [not null, unique] [note: 'ISBN-13 com 13 dígitos, sem hífens.']
+  ano_publicacao smallint [not null] [note: 'Ano da edição, entre 1400 e 2100.']
+  id_editora bigint [not null] [note: 'Editora que publicou.']
+}
+
+Table livro_autor {
+  id_livro bigint [pk] [note: 'Obra.']
+  id_autor bigint [pk] [note: 'Autor da obra.']
+}
+
+Table usuario {
+  id_usuario bigint [pk] [note: 'Identificador único do usuário.']
+  nome varchar(120) [not null] [note: 'Nome completo.']
+  documento varchar(11) [not null, unique] [note: 'CPF com 11 dígitos, sem pontos nem traço.']
+  email varchar(150) [not null, unique] [note: 'E-mail institucional.']
+  tipo_usuario varchar(20) [not null] [note: 'aluno · professor · funcionario.']
+  data_cadastro timestamp with time zone [not null] [note: 'Quando o usuário foi cadastrado.']
+}
+
+Ref: emprestimo.id_exemplar > exemplar.id_exemplar
+Ref: emprestimo.id_usuario > usuario.id_usuario
+Ref: exemplar.id_livro > livro.id_livro
+Ref: livro.id_editora > editora.id_editora
+Ref: livro_autor.id_autor > autor.id_autor
+Ref: livro_autor.id_livro > livro.id_livro

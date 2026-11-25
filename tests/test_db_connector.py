@@ -23,10 +23,10 @@ def _make_sqlite(tmp_path) -> str:
     connection = sqlite3.connect(tmp_path / "demo.db")
     connection.executescript(
         """
-        CREATE TABLE clientes (id INTEGER PRIMARY KEY, nome TEXT);
+        CREATE TABLE clientes (id INTEGER PRIMARY KEY, nome TEXT NOT NULL);
         CREATE TABLE pedidos (
             id INTEGER PRIMARY KEY,
-            cliente_id INTEGER REFERENCES clientes(id),
+            cliente_id INTEGER NOT NULL REFERENCES clientes(id),
             valor REAL
         );
         INSERT INTO clientes (id, nome) VALUES (1, 'Ana'), (2, 'Bob');
@@ -47,6 +47,16 @@ def test_schema_is_introspected(tmp_path):
     foreign_keys = source.schema.table("pedidos").foreign_keys
     assert foreign_keys and foreign_keys[0].ref_table == "clientes"
     assert foreign_keys[0].columns == ("cliente_id",)
+    source.close()
+
+
+def test_introspection_keeps_nullability(tmp_path):
+    """Regressão: a introspecção em massa não pode perder o NOT NULL."""
+    source = DatabaseSource(DatabaseConfig(url=_make_sqlite(tmp_path)))
+    colunas = {c.name: c for c in source.schema.table("clientes").columns}
+
+    assert colunas["id"].primary_key is True
+    assert colunas["nome"].not_null is True
     source.close()
 
 

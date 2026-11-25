@@ -25,8 +25,57 @@
 | Saber onde fica cada coisa | [docs/ONDE-FICA-O-QUE.md](docs/ONDE-FICA-O-QUE.md) |
 | Ver a sua responsabilidade | [ROADMAP.md](ROADMAP.md) e o guia da sua frente |
 | Entender o código | [docs/ARQUITETURA.md](docs/ARQUITETURA.md) |
+| **Conectar no banco da demonstração** | [docs/COMO-CONECTAR.md](docs/COMO-CONECTAR.md) |
+| **Ver os diagramas do banco** | [docs/mer/README.md](docs/mer/README.md) |
+| **Ensaiar a apresentação** | [docs/APRESENTACAO.md](docs/APRESENTACAO.md) |
 | O que cada palavra significa | [CONTEXT.md](CONTEXT.md) |
 | Índice completo da documentação | [docs/README.md](docs/README.md) |
+
+---
+
+## 📚 Banco de dados da demonstração
+
+A demo usa uma **Biblioteca Universitária** em PostgreSQL (Neon): 7 tabelas,
+29 colunas e ~5.300 registros com **obras, autores e editoras reais**.
+
+| Tabela | O que guarda | Registros |
+|---|---|---|
+| `livro` | A obra: título, ISBN, ano | 456 |
+| `autor` | Quem escreveu | 277 |
+| `editora` | Quem publicou | 40 |
+| `livro_autor` | Liga livro↔autor (N:N) | 481 |
+| `exemplar` | A cópia física | 744 |
+| `usuario` | Aluno, professor ou funcionário | 800 |
+| `emprestimo` | Retiradas e devoluções | 2.500 |
+
+### Diagramas e documentação do banco
+
+| Eu quero... | Abra |
+|---|---|
+| **Diagrama bonito** para o relatório | [`biblioteca.dbml`](docs/mer/biblioteca.dbml) → colar em [dbdiagram.io](https://dbdiagram.io) → Export → PNG |
+| Ver o diagrama **aqui no GitHub** | [`02-logico.md`](docs/mer/02-logico.md) (desenha sozinho) |
+| MER conceitual (entidades e relacionamentos) | [`01-conceitual.md`](docs/mer/01-conceitual.md) |
+| Todas as colunas explicadas | [`03-dicionario-dados.md`](docs/mer/03-dicionario-dados.md) |
+| Por que cada restrição existe | [`04-integridade.md`](docs/mer/04-integridade.md) |
+| Índices | [`05-indices.md`](docs/mer/05-indices.md) |
+| Prova de normalização (1FN/2FN/3FN) | [`06-normalizacao.md`](docs/mer/06-normalizacao.md) |
+| O SQL real do banco | [`07-ddl.sql`](docs/mer/07-ddl.sql) |
+
+Índice completo: [`docs/mer/README.md`](docs/mer/README.md)
+
+### Como conectar
+
+Passo a passo: [`docs/COMO-CONECTAR.md`](docs/COMO-CONECTAR.md)
+
+```
+postgresql+psycopg://chatsql_ro@ep-royal-hall-b6uo2i82-pooler.c-2.sa-east-1.aws.neon.tech/neondb?sslmode=require
+```
+
+A senha não fica no repositório — peça no privado. O usuário é **somente
+leitura**: ninguém consegue alterar ou apagar nada.
+
+> ⚠️ Os arquivos `biblioteca_mer.png` / `.dot` / `.svg` de uma versão anterior
+> estão **desatualizados**. Use os links acima.
 
 ## Equipe (preencher)
 
@@ -148,14 +197,21 @@ streamlit run app.py
 
 Abra `http://localhost:8501`, vá na aba **Dados**, carregue um exemplo e pergunte.
 
+> **Deu `venvlauncher.exe` ao criar o ambiente?** Algumas instalações do Python
+> 3.14 vêm sem os launchers do `venv`. Use:
+> ```powershell
+> python -m pip install virtualenv
+> python -m virtualenv venv
+> ```
+
 ## Testes
 
 ```bash
-pip install -r requirements-dev.txt
+pip install -r requirements.txt    # pytest já incluído
 pytest
 ```
 
-Resultado atual: **174 testes passando, 6 guias desativados** (features do roadmap).
+Resultado atual: **196 testes passando, 6 guias desativados** (features do roadmap).
 
 Para medir a acurácia do motor no banco da biblioteca (precisa do `.env`):
 

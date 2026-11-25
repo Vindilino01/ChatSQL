@@ -62,7 +62,10 @@ def test_connect_sqlite_end_to_end(tmp_path):
     assert execute_keys, "esperava um botao Executar apos a pergunta"
     app.button(key=execute_keys[-1]).click().run()
     assert not app.exception
-    assert any(metric.label == "Linhas" for metric in app.metric)
+    # O design atual mostra escalar como número-herói, não como card de métrica.
+    escalares = [m.value for m in app.markdown if "chs-scalar-value" in m.value]
+    assert escalares, "esperava o número do resultado em destaque"
+    assert not app.metric, "cards de métrica não devem existir"
 
 
 def test_full_offline_flow():
@@ -81,5 +84,6 @@ def test_full_offline_flow():
     assert execute_keys, "esperava um botao Executar apos a pergunta"
     app.button(key=execute_keys[-1]).click().run()
     assert not app.exception
-    assert len(app.dataframe) >= 1
-    assert any(metric.label == "Linhas" for metric in app.metric)
+    escalares = [m.value for m in app.markdown if "chs-scalar-value" in m.value]
+    assert escalares, "esperava o número do resultado em destaque"
+    assert not app.metric, "cards de métrica não devem existir"
