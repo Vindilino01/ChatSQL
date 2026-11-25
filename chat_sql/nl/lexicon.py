@@ -98,10 +98,14 @@ TRUE_WORDS = {"ativo", "ativos", "ativa", "ativas", "sim", "verdadeiro", "verdad
 FALSE_WORDS = {"inativo", "inativos", "inativa", "inativas", "nao", "falso", "falsos", "desabilitado", "desligado"}
 
 COMPARISON_PATTERNS = (
-    (r"\b(?:maior|maiores|acima|superior(?:es)?|mais de|mais que|>)\s*(?:ou igual\s*)?(?:a|que|do que)?\s*(\d+(?:[.,]\d+)?)", ">=", ">"),
-    (r"\b(?:menor|menores|abaixo|inferior(?:es)?|menos de|menos que|<)\s*(?:ou igual\s*)?(?:a|que|do que)?\s*(\d+(?:[.,]\d+)?)", "<=", "<"),
+    (r"\b(?:maior|maiores|acima|superior(?:es)?|mais de|mais que|depois de|posterior(?:es)? a|>)\s*(?:ou igual\s*)?(?:a|que|do que)?\s*(\d+(?:[.,]\d+)?)", ">=", ">"),
+    (r"\b(?:menor|menores|abaixo|inferior(?:es)?|menos de|menos que|antes de|anterior(?:es)? a|<)\s*(?:ou igual\s*)?(?:a|que|do que)?\s*(\d+(?:[.,]\d+)?)", "<=", "<"),
     (r"\b(?:igual|igual a|exatamente|=)\s*(\d+(?:[.,]\d+)?)", "=", "="),
     (r"\b(?:diferente de|diferente|exceto|!=|<>)\s*(\d+(?:[.,]\d+)?)", "!=", "!="),
+    # "livros publicados em 2019", "empréstimos de 2024" -> ano igual
+    (r"\b(?:em|de|no ano de|durante)\s+((?:19|20)\d{2})\b", "=", "="),
+    # "... que saíram em 1999", "... de 1999?"
+    (r"\b((?:19|20)\d{2})\b", "=", "="),
 )
 
 BETWEEN_PATTERNS = (
@@ -113,12 +117,31 @@ LIKE_PATTERNS = (
     (r"\b(?:contem|contendo|que tenha|inclui|incluindo)\s+[\"']?([a-z0-9_ ]+?)[\"']?$", "contains"),
     (r"\b(?:comeca|comecam|iniciam|inicia) com\s+[\"']?([a-z0-9_ ]+?)[\"']?$", "startswith"),
     (r"\b(?:termina|terminam|acabam|acaba) com\s+[\"']?([a-z0-9_ ]+?)[\"']?$", "endswith"),
+    # "livro chamado Torto Arado", "obra intitulada X"
+    (
+        r"\b(?:chamad[oa]|intitulad[oa]|denominad[oa]|com o titulo)\s+[\"']?([a-z0-9_ ]+?)[\"']?$",
+        "contains",
+    ),
     # "livros com titulo Dom Casmurro", "livros cujo titulo e X"
     (
         r"\b(?:com|cujo|cuja|de)\s+(?:o\s+|a\s+)?(?:titulo|nome|descricao|tema|assunto)\s+"
         r"(?:e\s+|igual a\s+|chamado\s+|chamada\s+)?[\"']?([a-z0-9_ ]+?)[\"']?$",
         "contains",
     ),
+    # "tem algum livro com Dom Casmurro no titulo"
+    (
+        r"\b(?:com|contendo)\s+[\"']?([a-z0-9_ ]+?)[\"']?\s+(?:no|na|em)\s+"
+        r"(?:titulo|nome|descricao)",
+        "contains",
+    ),
+    # "procura livro com Dom Casmurro", "tem algum livro do Machado de Assis"
+    (
+        r"\b(?:livros?|obras?)\s+(?:com|do|da|de|sobre)\s+[\"']?([a-z0-9_ ]+?)[\"']?$",
+        "contains",
+    ),
+    # "procura livro com X", "procuro livros da autora Clarice"
+    (r"\bprocura(?:r|mos)?\s+(?:por\s+)?[\"']?([a-z0-9_ ]+?)[\"']?$", "contains"),
+    (r"\bprocuro\s+(?:por\s+)?[\"']?([a-z0-9_ ]+?)[\"']?$", "contains"),
     # "livros sobre Machado de Assis"
     (r"\bsobre\s+[\"']?([a-z0-9_ ]+?)[\"']?$", "contains"),
 )
@@ -144,6 +167,7 @@ DATE_RELATIVE_PHRASES = (
     "este mes", "mes atual", "nesse mes", "neste mes",
     "ano passado", "ultimo ano", "ano anterior",
     "este ano", "ano atual", "nesse ano",
+    "esse ano", "nesse ano", "ano corrente", "ano vigente",
     "semana passada", "ultima semana", "esta semana", "semana atual",
     "hoje", "ontem", "anteontem", "amanha",
     "primeiro trimestre", "segundo trimestre", "terceiro trimestre", "quarto trimestre",
