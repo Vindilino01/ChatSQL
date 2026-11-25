@@ -25,6 +25,9 @@
 | Saber onde fica cada coisa | [docs/ONDE-FICA-O-QUE.md](docs/ONDE-FICA-O-QUE.md) |
 | Ver a sua responsabilidade | [ROADMAP.md](ROADMAP.md) e o guia da sua frente |
 | Entender o código | [docs/ARQUITETURA.md](docs/ARQUITETURA.md) |
+| **Conectar no banco da demonstração** | [docs/COMO-CONECTAR.md](docs/COMO-CONECTAR.md) |
+| **Ver os diagramas do banco** | [docs/mer/README.md](docs/mer/README.md) |
+| **Ensaiar a apresentação** | [docs/APRESENTACAO.md](docs/APRESENTACAO.md) |
 | O que cada palavra significa | [CONTEXT.md](CONTEXT.md) |
 | Índice completo da documentação | [docs/README.md](docs/README.md) |
 

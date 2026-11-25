@@ -1,6 +1,6 @@
 # Postgres, Neon e o dialeto do Motor Offline
 
-[Início](../README.md) · [Índice](README.md) · [Todas as decisões](.)
+[Início](../../README.md) · [Índice](../README.md) · [Todas as decisões](.)
 
 A demonstração usa um Postgres hospedado no **Neon**, e o schema da biblioteca vive em `public` (ver [BANCO.md](../BANCO.md)). Isso obrigou duas decisões que não estavam previstas quando o projeto começou:
 

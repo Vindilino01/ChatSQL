@@ -34,10 +34,13 @@ Este é o **índice**. Encontre aqui o que você precisa; cada link leva direto 
 | Melhorar as telas, cores ou fontes | [frentes/C-interface-e-design.md](frentes/C-interface-e-design.md) |
 | Mudar o gráfico ou a tabela de resultados | [frentes/C-interface-e-design.md](frentes/C-interface-e-design.md) |
 | Conectar num banco de dados | [frentes/A-banco-de-dados.md](frentes/A-banco-de-dados.md) |
+| **Conectar no banco da demonstração** | [COMO-CONECTAR.md](COMO-CONECTAR.md) |
 | Criar os dados da biblioteca | [frentes/D-dados-e-biblioteca.md](frentes/D-dados-e-biblioteca.md) |
 | Ler planilhas, Google Sheets ou dump `.sql` | [frentes/D-dados-e-biblioteca.md](frentes/D-dados-e-biblioteca.md) |
-| Entender o banco da biblioteca | [BANCO.md](BANCO.md) |
+| Entender o banco da biblioteca | [BANCO.md](BANCO.md) e [mer/](mer/) |
 | Publicar o app ou montar a apresentação | [frentes/E-entrega-e-apresentacao.md](frentes/E-entrega-e-apresentacao.md) |
+| **Ensaiar a apresentação** | [APRESENTACAO.md](APRESENTACAO.md) |
+| **Medir a acurácia com perguntas reais** | [AVALIACAO-MOTOR.md](AVALIACAO-MOTOR.md) |
 | Colocar prints das telas | [imagens/README.md](imagens/README.md) |
 
 ## Documentos do projeto

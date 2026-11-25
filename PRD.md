@@ -172,15 +172,22 @@ pytest
 
 | Métrica | Valor |
 |---------|-------|
-| Acurácia do Motor Offline (biblioteca) | **100% (14/14)** |
+| Acurácia do Motor Offline (biblioteca) | **100% (14/14)** no conjunto de referência |
 | Acurácia do Motor Offline (e-commerce) | 14/14 no conjunto de casos |
 | Perguntas de avaliação | 14 (biblioteca) + 15 (e-commerce, RH, vendas) |
-| Testes automatizados | 174 + 6 guias desativados |
+| Testes automatizados | **204** + 6 guias desativados |
 | Registros no banco da demo | ~5.300 (456 livros reais, 277 autores, 40 editoras, 744 exemplares, 800 usuários, 2.500 empréstimos) |
+| Conexão ao banco remoto | **6,4 s** (inclui cold start do Neon) |
+| Cada consulta | **0,23 s** (pool quente) |
 
 O conjunto da biblioteca é medido contra o Postgres real por
 `tests/eval/test_biblioteca.py` (sem IA). O acervo usa **obras, autores e
 editoras reais**; exemplares, usuários e empréstimos são gerados.
+
+> **Nota metodológica:** 14/14 é um conjunto **de referência**, escrito junto
+> com o motor. Não substitui uma medição cega. O harness está pronto em
+> `tests/eval/test_biblioteca.py` — basta acrescentar perguntas não ensaiadas
+> (ver `docs/AVALIACAO-MOTOR.md`).
 
 ---
 
