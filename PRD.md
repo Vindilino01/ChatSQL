@@ -175,7 +175,9 @@ pytest
 | Acurácia — bateria de desenvolvimento | **28/28 (100%)** |
 | Acurácia — validação cega (nunca usada no ajuste) | **20/20 (100%)** |
 | Acurácia — linguagem coloquial | **18/18 (100%)** |
-| Recusa de perguntas fora do domínio | **3/3** |
+| Acurácia — quarto conjunto (escrito do dicionário de dados) | **25/25 (100%)** |
+| **Total dos quatro conjuntos** | **91/91 (100%)** |
+| Recusa de perguntas fora do domínio | **5/5** |
 | Testes automatizados | **208** + 6 guias desativados |
 | Registros no banco da demo | ~5.300 (456 livros reais, 277 autores, 40 editoras, 744 exemplares, 800 usuários, 2.500 empréstimos) |
 | Conexão ao banco remoto | **6,4 s** (inclui cold start do Neon) |
@@ -183,7 +185,7 @@ pytest
 
 ### Como a acurácia foi medida
 
-Três conjuntos, todos comparados **por resultado** (o SQL do motor precisa
+Quatro conjuntos, todos comparados **por resultado** (o SQL do motor precisa
 devolver o mesmo que um SQL de referência escrito à mão) — não basta "rodar":
 
 | Conjunto | Perguntas | Uso |
@@ -191,6 +193,7 @@ devolver o mesmo que um SQL de referência escrito à mão) — não basta "roda
 | `tests/eval/bateria_cega.py` | 28 | Corrigimos o motor olhando para elas |
 | `tests/eval/validacao.py` | 20 | Escritas **depois**, nunca usadas no ajuste |
 | `tests/eval/coloquial.py` | 18 | Linguagem de balcão ("ô, me vê quantos livro tem") |
+| `tests/eval/quarto_conjunto.py` | 25 | Escritas **só com o dicionário de dados**, sem abrir o código |
 
 Reproduza com:
 
@@ -198,11 +201,12 @@ Reproduza com:
 .\venv\Scripts\python -m pytest tests/eval/test_acuracia.py -s
 ```
 
-> **Nota metodológica honesta:** os três conjuntos foram escritos pela mesma
-> pessoa que ajustou o motor, num intervalo de horas. Isso reduz o risco de
-> sobreajuste, mas não é o mesmo que uma bateria coletada por usuários reais ao
-> longo de semanas. O harness está pronto para receber perguntas novas
-> (`docs/AVALIACAO-MOTOR.md`).
+> **Nota metodológica honesta:** os quatro conjuntos foram escritos pela mesma
+> pessoa que ajustou o motor. O quarto foi escrito olhando apenas
+> `docs/mer/03-dicionario-dados.md`, o que reduz o viés — mas não é o mesmo que
+> uma bateria coletada por usuários reais ao longo de semanas. O harness está
+> pronto para receber perguntas novas (`docs/AVALIACAO-MOTOR.md`); basta
+> acrescentar ao arquivo de validação.
 
 ---
 

@@ -86,6 +86,19 @@ LABEL_HINTS = (
     "razao", "produto", "cliente", "funcionario", "label",
 )
 
+# Sinônimos de negócio: como o usuário chama a tabela vs. o nome no banco.
+# "obras" -> livro, "pessoas" -> usuario. Sem isso, o motor recusa perguntas
+# naturais que qualquer bibliotecário faria.
+SINONIMOS_TABELA: dict[str, tuple[str, ...]] = {
+    "livro": ("obra", "obras", "livros", "acervo", "exemplares", "titulo", "titulos"),
+    "autor": ("autores", "escritor", "escritores", "autor"),
+    "editora": ("editoras", "publicadora", "publicadoras"),
+    "usuario": ("usuarios", "pessoa", "pessoas", "leitor", "leitores", "cliente", "clientes"),
+    "exemplar": ("exemplares", "copia", "copias", "unidade", "unidades"),
+    "emprestimo": ("emprestimos", "retirada", "retiradas", "locacao", "locacoes"),
+    "livro_autor": ("autoria", "autorias"),
+}
+
 DISTINCT_WORDS = {"distintos", "distintas", "unicos", "unicas", "diferentes", "distinto", "unico"}
 
 EXISTS_WORDS = {"existe", "existem", "tem", "ha", "algum", "alguma", "alguns", "algumas"}

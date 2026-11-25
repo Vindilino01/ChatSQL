@@ -25,6 +25,8 @@
 | Saber onde fica cada coisa | [docs/ONDE-FICA-O-QUE.md](docs/ONDE-FICA-O-QUE.md) |
 | Ver a sua responsabilidade | [ROADMAP.md](ROADMAP.md) e o guia da sua frente |
 | Entender o código | [docs/ARQUITETURA.md](docs/ARQUITETURA.md) |
+| **Escrever o relatório** | [RELATORIO.md](RELATORIO.md) |
+| **Gerar o diagrama do banco** | [docs/mer/biblioteca.drawio](docs/mer/biblioteca.drawio) (abre no draw.io) |
 | **Conectar no banco da demonstração** | [docs/COMO-CONECTAR.md](docs/COMO-CONECTAR.md) |
 | **Ver os diagramas do banco** | [docs/mer/README.md](docs/mer/README.md) |
 | **Ensaiar a apresentação** | [docs/APRESENTACAO.md](docs/APRESENTACAO.md) |

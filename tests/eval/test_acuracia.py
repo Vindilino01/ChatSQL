@@ -21,6 +21,8 @@ from dotenv import load_dotenv
 from chat_sql.db import DatabaseConfig, DatabaseSource
 from chat_sql.offline import OfflineEngine
 from tests.eval.bateria_cega import CASOS, NAO_DEVEM_RESPONDER
+from tests.eval.coloquial import COLOQUIAL
+from tests.eval.quarto_conjunto import QUARTO_CONJUNTO
 from tests.eval.validacao import VALIDACAO
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -80,6 +82,25 @@ def test_acuracia_validacao_cega(source):
     for f in falhas:
         print("  FALHA:", f)
     assert acertos / len(VALIDACAO) >= 0.85
+
+
+def test_acuracia_quarto_conjunto(source):
+    """Escrito só com o dicionário de dados, sem abrir o código do motor."""
+    acertos, falhas = _medir(source, QUARTO_CONJUNTO)
+    print(f"\nQuarto conjunto: {acertos}/{len(QUARTO_CONJUNTO)} = {acertos / len(QUARTO_CONJUNTO):.0%}")
+    for f in falhas:
+        print("  FALHA:", f)
+    assert acertos / len(QUARTO_CONJUNTO) >= 0.85
+
+
+def test_acuracia_coloquial(source):
+    """Linguagem de balcão, como um funcionário falaria."""
+    casos = [(q, r) for q, r in COLOQUIAL if r != "__RECUSAR__"]
+    acertos, falhas = _medir(source, casos)
+    print(f"\nColoquial: {acertos}/{len(casos)} = {acertos / len(casos):.0%}")
+    for f in falhas:
+        print("  FALHA:", f)
+    assert acertos / len(casos) >= 0.85
 
 
 def test_recusa_perguntas_fora_do_dominio(source):

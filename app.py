@@ -130,6 +130,27 @@ div[data-testid="stCodeBlock"] code, .stCode code { font-family: 'IBM Plex Mono'
 .stTabs [data-baseweb="tab-list"] { gap: 6px; }
 .stTabs [data-baseweb="tab"] { border-radius: 10px; padding: 6px 14px; }
 .stTabs [aria-selected="true"] { background: rgba(99,102,241,0.16); }
+
+/* Projetor da sala costuma ser 1366x768. Sem este ajuste, a sidebar larga
+   corta o conteúdo e o número do resultado sai da tela. */
+@media (max-width: 1450px) {
+  section[data-testid="stSidebar"] { width: 260px !important; min-width: 260px !important; }
+  .chs-title { font-size: 28px; }
+  .chs-sub { font-size: 13px; margin-bottom: 12px; }
+  .chs-scalar-value { font-size: 46px; }
+  .chs-scalar { padding: 12px 4px 8px; gap: 10px; }
+  .chs-brand { font-size: 20px; }
+  .chs-chip { font-size: 12px; padding: 5px 9px; }
+}
+
+@media (max-height: 800px) {
+  /* Em telas baixas, reduz o respiro vertical para o resultado caber. */
+  .block-container { padding-top: 2rem !important; padding-bottom: 1.5rem !important; }
+  .chs-title { font-size: 26px; }
+  .chs-sub { margin-bottom: 10px; }
+  .chs-scalar-value { font-size: 44px; }
+  .chs-user { padding: 9px 14px; margin: 8px 0 6px auto; }
+}
 </style>
 """
 

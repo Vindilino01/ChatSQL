@@ -232,6 +232,12 @@ def _find_subject(schema: Schema, question: str, original: str = "") -> tuple[Ta
         # Sem nome de tabela na pergunta: se houver so uma tabela, e ela.
         if len(schema.tables) == 1:
             return next(iter(schema.tables.values())), []
+        # Sinônimo de negócio: "obras" -> livro, "pessoas" -> usuario.
+        for tabela_nome, sinonimos in lex.SINONIMOS_TABELA.items():
+            if any(s in q_forms for s in sinonimos):
+                tabela = schema.table(tabela_nome)
+                if tabela is not None:
+                    return tabela, []
         # Tenta pela tabela dona do valor de domínio citado
         # ("quantos professores" -> usuario, tipo_usuario='professor').
         por_dominio = _tabela_por_dominio(schema, q_forms)
@@ -375,6 +381,8 @@ def _e_tabela_ligacao(table: Table) -> bool:
 
 
 def _resolve_group(schema: Schema, question: str, subject: Table):
+    if re.search(r"\b(?:por|para cada|em cada|agrupado por|agrupada por|cada)\s+([a-z0-9_ ]+)", question):
+        pass
     match = re.search(
         r"\b(?:por|para cada|em cada|agrupado por|agrupada por|cada)\s+([a-z0-9_ ]+)",
         question,
@@ -412,8 +420,12 @@ def _resolve_group(schema: Schema, question: str, subject: Table):
         if column.type == "TEXT" and noun in forms(column.name):
             return (subject, column)
 
-    # 3) Coluna de texto em tabela relacionada.
-    for table in _related(schema, subject):
+    # 3) Coluna de texto em QUALQUER tabela alcançável (não só vizinha direta):
+    #    "por nacionalidade" mora em `autor`, que só se liga a `livro` via
+    #    `livro_autor`.
+    for table in schema.tables.values():
+        if table.name.lower() == subject.name.lower():
+            continue
         for column in table.columns:
             if column.type == "TEXT" and noun in forms(column.name):
                 return (table, column)
@@ -554,6 +566,7 @@ def _extract_null_filter(question: str, subject: Table) -> Filter | None:
         # "não foram devolvidos" / "não foi feito" = registro em aberto
         or re.search(r"\bnao (?:foram|foi|esta|estao|tinha)\b", question) is not None
         or re.search(r"\bainda nao\b", question) is not None
+        or "em aberto" in question
     )
     is_not_null = bool(words & lex.NOT_NULL_WORDS) or "com valor" in question
     if not (is_null or is_not_null):
@@ -770,6 +783,18 @@ def _extract_date_filter(schema: Schema, question: str, subject: Table, preferre
                 target = (table, column)
                 break
     if target is None:
+        # "século 21" -> ano entre 2001 e 2100
+        seculo = re.search(r"\bs[eé]culo\s+(\d{1,2})\b", question)
+        if seculo:
+            n = int(seculo.group(1))
+            for table in order:
+                for column in table.columns:
+                    nome = column.name.lower()
+                    if column.type in ("INTEGER", "REAL") and ("ano" in nome or "year" in nome):
+                        return Filter(
+                            "numeric", table.name, column.name, "between",
+                            (str((n - 1) * 100 + 1), str(n * 100)),
+                        )
         # "esse ano" para tabela cujo ano é INTEGER (ano_publicacao):
         # "os livros que saíram esse ano" -> ano_publicacao = <ano atual>.
         if re.search(r"\b(esse ano|este ano|ano atual|ano corrente)\b", question):
@@ -1154,6 +1179,11 @@ class OfflineEngine:
             return "count", distinct
         # "distribuição de X por Y" é agrupamento com contagem.
         if re.search(r"\b(distribuicao|distribuição|quebra|breakdown)\b", q):
+            return "count", distinct
+        # "existem empréstimos em aberto?" -> contagem, não listagem.
+        if re.search(r"\b(existe|existem|ha)\b", q) and not re.search(
+            r"\b(quais|qual|liste|mostre|exiba|traga)\b", q
+        ):
             return "count", distinct
         # "total de usuários" / "número total de empréstimos" é contagem, não
         # soma — não existe coluna numérica para somar.

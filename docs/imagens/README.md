@@ -1,42 +1,57 @@
 # Imagens (prints das telas)
 
-Coloque aqui as fotos (prints) das telas do projeto. Elas ajudam quem não programa
-a entender o que o Chat SQL faz.
+Coloque aqui as fotos das telas do projeto. Elas vão para o relatório e os
+slides.
 
 [Início](../../README.md) · [Índice](../README.md) · [Mapa: onde fica o quê](../ONDE-FICA-O-QUE.md)
 
 ---
 
+## Arquivos esperados
+
+| Arquivo | O que deve mostrar |
+|---|---|
+| `tela-chat.png` | A pergunta digitada, o SQL gerado e o **número em destaque** |
+| `tela-dados.png` | A aba Dados com a prévia das tabelas carregadas |
+| `tela-configuracoes.png` | A tela de configurações com o provedor |
+| `diagrama-er.png` | O diagrama do banco (gerado no draw.io) |
+| `tela-grafico.png` | Um resultado com gráfico (ex.: "quantos empréstimos por mês") |
+
 ## Como tirar um print (Windows)
 
-1. Aperte `Windows + Shift + S`.
-2. Selecione a área da tela que quer copiar.
-3. Cole (Ctrl + V) num programa de imagem ou salve direto.
-4. Renomeie o arquivo com um nome simples, por exemplo:
-   - `tela-chat.png`
-   - `tela-dados.png`
-   - `tela-configuracoes.png`
+1. Aperte `Windows + Shift + S`
+2. Selecione a área — prefira capturar **só a área do app**, sem o navegador
+3. Cole (Ctrl + V) num programa de imagem ou salve direto
+4. Renomeie com o nome exato da tabela acima
 
-## Como usar a imagem no README
+**Antes de capturar:**
+- Deixe o app com zoom 100% (`Ctrl + 0` no navegador)
+- Se a tela for grande, use uma janela de **1366×768** — é o tamanho do projetor
+  da sala, e o que vocês virem é o que a banca vai ver
+- Feche abas e notificações que apareçam na captura
 
-No arquivo onde quiser mostrar a imagem, escreva:
+## Como usar as imagens
+
+### No relatório (`RELATORIO.md`, na raiz)
 
 ```markdown
-![Chat](docs/imagens/tela-chat.png)
+![Diagrama entidade-relacionamento](docs/imagens/diagrama-er.png)
 ```
 
-Se estiver dentro da pasta `docs/`, use o caminho curto:
+### Dentro da pasta `docs/`
 
 ```markdown
 ![Chat](imagens/tela-chat.png)
 ```
 
-## Sugestões de prints
+## O diagrama do banco
 
-- A aba **Chat** respondendo uma pergunta (com o SQL e a tabela).
-- A aba **Dados** com a prévia de uma planilha.
-- O resultado com o **gráfico**.
-- A tela de **Configurações** com o Provedor.
+Siga [`docs/mer/README.md`](../mer/README.md). O caminho mais confiável:
+
+1. Abra <https://app.diagrams.net>
+2. **File → Open From → Device…** → escolha `docs/mer/biblioteca.drawio`
+3. **File → Export as → PNG**, zoom 200%
+4. Salve aqui como `diagrama-er.png`
 
 ---
 

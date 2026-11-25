@@ -20,12 +20,38 @@ editoras reais**.
 
 ## Para o diagrama do relatório
 
-1. Abra <https://dbdiagram.io>
-2. Cole o conteúdo de [`biblioteca.dbml`](biblioteca.dbml)
-3. **Export → PNG**
-4. Salve em [`docs/imagens/`](../imagens/)
+Você tem **três caminhos**. O primeiro é o mais confiável.
 
-Nada para instalar.
+### Opção 1 — draw.io com o arquivo pronto (recomendado)
+
+1. Abra <https://app.diagrams.net> (não precisa instalar nem criar conta)
+2. **File → Open From → Device…**
+3. Escolha [`biblioteca.drawio`](biblioteca.drawio)
+4. O diagrama aparece montado: 7 tabelas, colunas com PK/FK, 6 setas de relacionamento
+5. **File → Export as → PNG** (marque *Transparent Background* desmarcado e *Zoom* 200% para ficar nítido)
+6. Salve em [`docs/imagens/`](../imagens/) como `diagrama-er.png`
+
+> As caixas vêm posicionadas, mas você pode arrastar para melhorar o layout.
+> Se mover uma caixa, as setas acompanham.
+
+**Se o arquivo não abrir:** é sinal de que o download corrompeu (acontece no Windows ao salvar pelo navegador). Baixe de novo com `git pull` e abra direto do repositório.
+
+### Opção 2 — importar o Mermaid
+
+1. Abra <https://app.diagrams.net>
+2. **Arrange → Insert → Advanced → Mermaid**
+3. Cole o bloco de [`02-logico.md`](02-logico.md), começando em `erDiagram` e terminando na última `}` (sem as três crases)
+4. Ajuste o layout manualmente
+
+> ⚠️ A conversão do Mermaid pode trazer as tabelas **sem as linhas de relacionamento**. Se isso acontecer, use a Opção 1.
+
+### Opção 3 — dbdiagram.io (alternativa)
+
+1. Abra <https://dbdiagram.io>
+2. Cole [`biblioteca.dbml`](biblioteca.dbml)
+3. **Export → PNG**
+
+Não é draw.io, mas gera imagem pronta para o relatório.
 
 ## Resumo das tabelas
 
@@ -46,6 +72,12 @@ em uso** por:
 
 ```powershell
 .\venv\Scripts\python scripts\exportar_mer.py
+```
+
+E o arquivo `biblioteca.drawio` (para abrir no draw.io) por:
+
+```powershell
+.\venv\Scripts\python scripts\exportar_drawio.py
 ```
 
 Ou seja: se o banco mudar, é só rodar de novo. Não são digitados à mão — não
