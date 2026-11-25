@@ -17,6 +17,8 @@ Leia a coluna "O que é isso" sem medo: são explicações simples, sem termo t�
 | Ligar/desligar a segurança (a Trava) | `chat_sql/guard.py` | Frente B |
 | Executar as consultas | `chat_sql/engine.py` (na memória) e `chat_sql/db.py` (banco real) | Frentes A e B |
 | Conectar num banco de dados | `chat_sql/db.py` | Frente A |
+| Ler uma planilha do Google | `chat_sql/sheets.py` | Frente D |
+| Importar um arquivo `.sql` | `chat_sql/sql_dump.py` | Frente D |
 | As telas (Chat, Dados, Configurações) | `app.py` | Frente C |
 | Cores, fontes, cartões, botões (visual) | `app.py` (parte `CSS`, no começo do arquivo) e `.streamlit/config.toml` | Frente C |
 | A tabela e o gráfico do resultado | `app.py` (função `_render_result`) | Frente C |
@@ -24,7 +26,6 @@ Leia a coluna "O que é isso" sem medo: são explicações simples, sem termo t�
 | Schemas prontos de demonstração | `schemas/` | Frente D |
 | O banco da biblioteca (DDL) | `schemas/biblioteca-postgres.sql` + `docs/BANCO.md` | Frente D |
 | Ler planilhas (CSV, Excel) | `chat_sql/spreadsheet.py` | Frente D |
-| Google Sheets e dump `.sql` | `chat_sql/sheets.py` e `chat_sql/sql_dump.py` | Frente D |
 | Guardar fontes e histórico | `chat_sql/store.py` | Frente D |
 | Publicar / Docker / apresentação | raiz do projeto e `docs/` | Frente E |
 | Testes | `tests/` | Todos |

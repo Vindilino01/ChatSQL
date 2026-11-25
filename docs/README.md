@@ -14,6 +14,9 @@ Este é o **índice**. Encontre aqui o que você precisa; cada link leva direto 
 | Saber onde fica cada coisa no projeto | [ONDE-FICA-O-QUE.md](ONDE-FICA-O-QUE.md) |
 | Entender como o código funciona | [ARQUITETURA.md](ARQUITETURA.md) |
 | Saber o que cada palavra significa | [../CONTEXT.md](../CONTEXT.md) |
+| Entender o produto (público, objetivo, limites) | [../PRODUCT.md](../PRODUCT.md) |
+| Mudar cores, fontes ou componentes | [../DESIGN.md](../DESIGN.md) |
+| **Escrever o relatório** | [../RELATORIO.md](../RELATORIO.md) |
 
 ## Por responsabilidade (frentes)
 

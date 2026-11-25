@@ -64,3 +64,42 @@ def test_no_create_table_raises():
 def test_invalid_ddl_raises():
     with pytest.raises(SchemaError):
         parse_schema("this is not sql at all (((")
+
+
+MYSQL_DUMP = """
+CREATE TABLE `clientes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `nome` varchar(120) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `pedidos` (
+  `id` int(11) NOT NULL,
+  `cliente_id` int(11) NOT NULL,
+  `valor` decimal(10,2) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_cliente` (`cliente_id`),
+  INDEX `idx_valor` (`valor`),
+  CONSTRAINT `fk_cliente` FOREIGN KEY (`cliente_id`) REFERENCES `clientes` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+"""
+
+
+def test_mysql_dump_does_not_create_fake_key_column():
+    """`KEY nome (col)` do MySQL não é coluna — é índice."""
+    schema = parse_schema(MYSQL_DUMP)
+    assert schema.column_names("pedidos") == ["id", "cliente_id", "valor"]
+
+
+def test_mysql_dump_keeps_real_foreign_key():
+    schema = parse_schema(MYSQL_DUMP)
+    fks = schema.table("pedidos").foreign_keys
+    assert len(fks) == 1
+    assert fks[0].columns == ("cliente_id",)
+    assert fks[0].ref_table == "clientes"
+
+
+def test_mysql_dump_keeps_quoted_column_named_key():
+    """Uma coluna de verdade chamada `key` sobrevive ao filtro."""
+    schema = parse_schema("CREATE TABLE t (`key` text, id int);")
+    assert schema.column_names("t") == ["key", "id"]

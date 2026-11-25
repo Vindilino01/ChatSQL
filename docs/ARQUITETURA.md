@@ -79,7 +79,8 @@ A ideia é que qualquer integrante consiga ler e entender em ~20 minutos.
 | `provider.py` | Cliente OpenAI-compatible | Multi-provedor |
 | `pipeline.py` | Orquestra gerar -> validar -> executar | Um lugar para o fluxo |
 | `db.py` | Conexão somente leitura (SQLite/Postgres) | Consultar bancos reais |
-| `sheets.py` / `sql_dump.py` | **A IMPLEMENTAR** | Ver `ROADMAP.md` |
+| `sheets.py` | Google Sheets público: link → CSV | Planilha na nuvem |
+| `sql_dump.py` | Lê dump `.sql`, converte MySQL e classifica | Migrar de sistema antigo |
 
 ### Conexão a banco real (`db.py`)
 
@@ -87,8 +88,10 @@ A ideia é que qualquer integrante consiga ler e entender em ~20 minutos.
 (tabelas, colunas, tipos e FKs) e executar passando pela Trava no dialeto da fonte.
 Suporta SQLite (testes) e Postgres (demo). A segurança é em camadas: usuário
 somente leitura, sessão em modo leitura quando possível, timeout por dialeto e a
-Trava bloqueando qualquer coisa que não seja `SELECT`. A ligação na tela já existe
-na aba Dados (frente C evolui: MySQL, testar conexão e seletor de tabelas).
+Trava bloqueando qualquer coisa que não seja `SELECT`. A ligação na tela está na
+aba Dados: campos separados (host, banco, usuário, senha) ou URL completa,
+lembrando host/banco/usuário entre sessões — nunca a senha — e com seletor visual
+de tabelas depois da primeira conexão. MySQL fica como evolução.
 
 ## 4. A Trava (segurança)
 

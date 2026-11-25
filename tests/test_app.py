@@ -49,6 +49,8 @@ def test_connect_sqlite_end_to_end(tmp_path):
     app = AppTest.from_file(APP, default_timeout=60)
     app.run()
     app.radio[0].set_value("Banco de dados (Postgres/SQLite)").run()
+    app.radio[0].set_value("Banco de dados (Postgres/SQLite)").run()
+    app.radio(key="db_input_mode").set_value("URL completa").run()
     app.text_input(key="db_url").set_value(f"sqlite:///{db_path.as_posix()}").run()
     app.button(key="connect_db").click().run()
     assert not app.exception

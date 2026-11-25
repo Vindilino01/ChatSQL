@@ -44,8 +44,10 @@ EXAMPLE_SCHEMAS = ["e-commerce", "rh", "vendas"]
 PRESET_LABELS = [OFFLINE_PROVIDER, *PROVIDER_PRESETS]
 
 SOURCE_SPREADSHEET = "Planilhas (CSV/Excel)"
+SOURCE_SHEETS = "Google Sheets (link público)"
 SOURCE_DATABASE = "Banco de dados (Postgres/SQLite)"
 SOURCE_SCRIPT = "Script SQL (CREATE + INSERT)"
+SOURCE_DUMP = "Arquivo .sql (dump)"
 SOURCE_EXAMPLE = "Schema de exemplo"
 
 PREVIEW_TABLES = 12
@@ -366,6 +368,73 @@ def _load_spreadsheets(uploaded) -> None:
         st.rerun()
 
 
+def _load_sheets() -> None:
+    """Baixa uma planilha pública do Google e carrega como Fonte de Dados.
+
+    Passa pelo mesmo caminho das planilhas enviadas (salva em disco e ativa
+    pela fonte), para o histórico, o `?src=` e o sobreviver ao reload serem
+    idênticos — o visitante não precisa rebaixar a planilha a cada F5.
+    """
+    from chat_sql.sheets import SheetsError, read_public_sheet
+
+    link = (st.session_state.get("sheets_url") or "").strip()
+    if not link:
+        st.warning("Cole o link da planilha do Google.")
+        return
+
+    try:
+        with st.spinner("Baixando a planilha..."):
+            arquivos = read_public_sheet(link, name="google_sheets")
+    except SheetsError as exc:
+        st.error(f"Não consegui ler a planilha: {exc}")
+        return
+    except Exception as exc:
+        st.error(f"Falha ao baixar a planilha: {exc}")
+        return
+
+    try:
+        source_id = store.save_uploaded(arquivos, label="Google Sheets")
+    except Exception as exc:
+        st.error(f"Não consegui salvar a planilha: {exc}")
+        return
+
+    if _activate_source(source_id):
+        _flash("success", "Fonte ativa: Google Sheets.")
+        st.rerun()
+
+
+def _load_dump() -> None:
+    """Carrega um arquivo .sql enviado pelo usuário."""
+    from chat_sql.sql_dump import DumpError, prepare
+
+    enviado = st.session_state.get("dump_file")
+    if not enviado:
+        st.warning("Envie um arquivo .sql.")
+        return
+
+    try:
+        texto, descricao = prepare(enviado.getvalue())
+    except DumpError as exc:
+        st.error(str(exc))
+        return
+
+    try:
+        schema = parse_schema(texto)
+    except SchemaError as exc:
+        st.error(f"Script inválido: {exc}")
+        return
+
+    label = f"Dump .sql ({len(schema.tables)} tabelas · {descricao})"
+    # O caminho é o mesmo do Script SQL: guarda o texto e ativa pela fonte
+    # salva, para o histórico e a URL ?src= funcionarem igual.
+    source_id = store.save_text(
+        texto, "script", rows=int(st.session_state.sample_rows), label=label
+    )
+    if _activate_source(source_id):
+        _flash("success", f"Fonte ativa: {label}.")
+        st.rerun()
+
+
 def _load_script() -> None:
     text = st.session_state.get("script_text", "")
     try:
@@ -456,11 +525,15 @@ def _render_sidebar() -> None:
 # ---------------------------------------------------------------------------
 
 
-def _connect_database() -> None:
-    url = (st.session_state.get("db_url") or "").strip()
+def _connect_database(url: str | None = None) -> None:
+    url = (url if url is not None else st.session_state.get("db_url") or "").strip()
     if not url:
-        st.warning("Informe a URL de conexão.")
+        st.warning("Preencha o host, o banco e o usuário (ou cole a URL completa).")
         return
+    # Lembra host/banco/usuário já na primeira tentativa: se a senha estiver
+    # errada, o usuário corrige só ela em vez de redigitar tudo. A senha não é
+    # gravada em nenhum caso.
+    _salvar_conexao(url)
     allowed_text = st.session_state.get("db_tables") or ""
     allowed = [name.strip() for name in allowed_text.split(",") if name.strip()]
 
@@ -518,6 +591,12 @@ def _connect_database() -> None:
     st.session_state.source_label = f"Banco: {source.dialect} ({len(schema.tables)} tabelas)"
     st.session_state.source_id = None
     st.session_state.turns = []
+    # Guarda os nomes para o seletor visual da próxima conexão. Inclui as
+    # tabelas que o filtro deixou de fora (`rejected_tables`); sem isso, uma
+    # tabela desmarcada desapareceria do seletor e não poderia ser religada.
+    st.session_state.db_tabelas_disponiveis = sorted(
+        set(schema.table_names()) | set(getattr(source, "rejected_tables", None) or [])
+    )
     if "src" in st.query_params:
         del st.query_params["src"]
     _flash(
@@ -527,34 +606,144 @@ def _connect_database() -> None:
     st.rerun()
 
 
+def _salvar_conexao(url: str) -> None:
+    """Lembra host/banco/usuário da conexão — a senha nunca é gravada."""
+    store.save_connection(url)
+
+
+def _ler_conexao_salva() -> dict:
+    return store.read_connection()
+
+
+def _montar_url() -> str:
+    """Monta a URL a partir dos campos, quando o usuário usa o formulário."""
+    if st.session_state.get("db_input_mode") == "URL completa":
+        return (st.session_state.get("db_url") or "").strip()
+
+    salvo = _ler_conexao_salva()
+    host = st.session_state.get("db_host") or salvo.get("host", "")
+    banco = st.session_state.get("db_banco") or salvo.get("banco", "")
+    usuario = st.session_state.get("db_usuario") or salvo.get("usuario", "")
+    senha = st.session_state.get("db_senha") or ""
+    if not (host and banco and usuario):
+        return ""
+    from urllib.parse import quote
+
+    return (
+        f"postgresql+psycopg://{quote(usuario)}:{quote(senha)}@{host}/{banco}?sslmode=require"
+    )
+
+
+def _render_database_form() -> None:
+    """Formulário de conexão: URL direta ou campos separados.
+
+    Os campos separados evitam o erro mais comum — digitar a URL inteira e
+    esquecer o `+psycopg`. A senha nunca é salva em disco.
+    """
+    salvo = _ler_conexao_salva()
+
+    modo = st.radio(
+        "Como informar a conexão?",
+        ["Campos separados", "URL completa"],
+        key="db_input_mode",
+        horizontal=True,
+    )
+
+    if modo == "URL completa":
+        st.text_input(
+            "URL de conexão",
+            key="db_url",
+            placeholder="postgresql+psycopg://usuario_readonly:senha@host:5432/banco?sslmode=require",
+        )
+    else:
+        col1, col2 = st.columns(2)
+        with col1:
+            st.text_input("Host", key="db_host", value=salvo.get("host", ""),
+                          placeholder="ep-xxxx.sa-east-1.aws.neon.tech")
+        with col2:
+            st.text_input("Banco", key="db_banco", value=salvo.get("banco", ""),
+                          placeholder="neondb")
+        col3, col4 = st.columns(2)
+        with col3:
+            st.text_input("Usuário", key="db_usuario", value=salvo.get("usuario", ""),
+                          placeholder="chatsql_ro")
+        with col4:
+            st.text_input("Senha", key="db_senha", type="password",
+                          help="Não é salva. Precisa ser digitada a cada sessão.")
+
+    st.caption(
+        "Use um usuário **somente leitura**. Host, banco e usuário podem ser "
+        "lembrados; a senha, nunca."
+    )
+
+    # Seletor visual: depois de conectar uma vez, as tabelas ficam conhecidas
+    # e o usuário escolhe por checkbox em vez de digitar nomes.
+    disponiveis = st.session_state.get("db_tabelas_disponiveis") or []
+    if disponiveis:
+        _render_tabela_selector(disponiveis)
+
+    if st.button("Conectar e usar", key="connect_db", type="primary"):
+        url = _montar_url()
+        if not url:
+            st.warning("Preencha o host, o banco e o usuário (ou cole a URL completa).")
+            return
+        if disponiveis and not _tabelas_selecionadas():
+            st.warning(
+                "Marque ao menos uma tabela. Nenhuma marcada não significa "
+                "\"todas\" — significa que não haveria nada para consultar."
+            )
+            return
+        st.session_state.db_tables = ",".join(_tabelas_selecionadas())
+        _connect_database(url)
+
+
+def _tabelas_selecionadas() -> list[str]:
+    return st.session_state.get("db_tables_selecionadas") or []
+
+
+def _render_tabela_selector(tabelas: list[str]) -> None:
+    """Checkbox por tabela, em vez de campo de texto livre."""
+    st.caption("Tabelas que o app pode consultar:")
+    escolhidas: list[str] = []
+    colunas = st.columns(3)
+    for indice, nome in enumerate(sorted(tabelas)):
+        with colunas[indice % 3]:
+            if st.checkbox(nome, value=True, key=f"tbl_{nome}"):
+                escolhidas.append(nome)
+    st.session_state.db_tables_selecionadas = escolhidas
+
+
 def _render_data_tab() -> None:
     st.markdown("### Fonte de dados")
     st.caption("Uma fonte ativa por vez. Carregar uma nova substitui a atual.")
     mode = st.radio(
         "Como fornecer os dados?",
-        [SOURCE_SPREADSHEET, SOURCE_DATABASE, SOURCE_SCRIPT, SOURCE_EXAMPLE],
+        [SOURCE_SPREADSHEET, SOURCE_SHEETS, SOURCE_DATABASE, SOURCE_SCRIPT, SOURCE_DUMP, SOURCE_EXAMPLE],
         key="source_mode",
-        horizontal=True,
     )
 
     if mode == SOURCE_DATABASE:
+        _render_database_form()
+    elif mode == SOURCE_SHEETS:
         st.text_input(
-            "URL de conexão",
-            key="db_url",
-            placeholder="postgresql+psycopg://usuario_readonly:senha@localhost:5432/biblioteca",
+            "Link da planilha do Google",
+            key="sheets_url",
+            placeholder="https://docs.google.com/spreadsheets/d/.../edit#gid=0",
         )
         st.caption(
-            "Use um usuário **somente leitura**. A URL fica apenas nesta sessão "
-            "(não é salva em disco)."
+            "A planilha precisa estar pública: **Compartilhar → Qualquer pessoa com o "
+            "link → Leitor**. Baixa a primeira aba, ou a aba indicada no `gid` do link."
         )
-        st.text_input(
-            "Tabelas permitidas (opcional, separadas por vírgula)",
-            key="db_tables",
-            placeholder="livro, autor, emprestimo",
-            help="Deixe vazio para liberar todas. Use os nomes exatos das tabelas.",
+        if st.button("Carregar planilha do Google", key="load_sheets", type="primary"):
+            _load_sheets()
+    elif mode == SOURCE_DUMP:
+        st.file_uploader("Arquivo .sql", type=["sql", "txt"], key="dump_file")
+        st.caption(
+            "Aceita dumps com `CREATE TABLE` + `INSERT INTO` (usa os seus dados) ou só "
+            "estrutura (gera Dados de Exemplo)."
         )
-        if st.button("Conectar e usar", key="connect_db", type="primary"):
-            _connect_database()
+        if st.button("Carregar dump", key="load_dump", type="primary"):
+            _load_dump()
     elif mode == SOURCE_SPREADSHEET:
         uploaded = st.file_uploader(
             "Arquivos (uma tabela por aba/arquivo)",

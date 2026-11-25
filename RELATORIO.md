@@ -229,9 +229,10 @@ metodológica da seção 9.]`
 
 ### 8.3 Qualidade de software
 
-208 testes automatizados, cobrindo: a Trava (matriz de permitir/negar), o loop de
+240 testes automatizados, cobrindo: a Trava (matriz de permitir/negar), o loop de
 correção, a integridade referencial do gerador de dados, os dois dialetos SQL, a
-leitura de planilhas e o fluxo completo de conexão.
+leitura de planilhas, Google Sheets público, importação de dump `.sql`, a conexão
+lembrada (sem senha) e o fluxo completo de conexão.
 
 ## 9. Limitações
 
@@ -246,7 +247,9 @@ sabem o que o trabalho não faz.]` Pontos a cobrir:
 - Uma instância por instituição; não há login nem multi-tenant.
 - O banco da demonstração roda em plano gratuito, que suspende a computação
   após inatividade (a primeira conexão do dia demora alguns segundos).
-- Google Sheets e importação de dump `.sql` estão implementados como esqueleto.
+- Google Sheets só funciona com planilha pública (sem OAuth); dumps `.sql` são
+  carregados em memória, o que limita o tamanho aceitável. Dumps do MySQL são
+  convertidos automaticamente, mas rotinas, triggers e `DELIMITER` não são.
 
 ## 10. Trabalhos futuros
 

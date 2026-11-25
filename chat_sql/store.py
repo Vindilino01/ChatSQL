@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -29,7 +30,7 @@ def _folder(source_id: str) -> Path | None:
     return STORE_DIR / source_id
 
 
-def save_uploaded(files: list[tuple[str, bytes]]) -> str:
+def save_uploaded(files: list[tuple[str, bytes]], label: str | None = None) -> str:
     parts: list[bytes] = []
     for name, content in files:
         parts.append(name.encode("utf-8"))
@@ -43,7 +44,7 @@ def save_uploaded(files: list[tuple[str, bytes]]) -> str:
         safe = Path(name).name
         (folder / safe).write_bytes(content)
         names.append(safe)
-    label = "Planilhas: " + ", ".join(names)
+    label = label or "Planilhas: " + ", ".join(names)
     (folder / "meta.json").write_text(
         json.dumps({"kind": "spreadsheet", "files": names, "label": label}), encoding="utf-8"
     )
@@ -143,6 +144,43 @@ def read_recent(source_id: str) -> list[str]:
     if isinstance(data, list):
         return [str(item) for item in data]
     return []
+
+
+def save_connection(url: str) -> dict:
+    """Lembra host, banco e usuário de uma conexão — nunca a senha.
+
+    Grava em `~/.chat_sql_sources/conexao.json`. A ideia é poupar digitação na
+    próxima visita, não guardar credencial: a senha é pedida de novo sempre.
+    """
+    m = re.match(r"[\w+]+://([^:]+):[^@]*@([^/]+)/([^?]+)", url or "")
+    if not m:
+        return {}
+
+    usuario, host, banco = m.group(1), m.group(2), m.group(3)
+    preferencias = read_connection()
+    preferencias.update({"usuario": usuario, "host": host, "banco": banco})
+    try:
+        _connection_path().write_text(json.dumps(preferencias), encoding="utf-8")
+    except OSError:
+        return preferencias
+    return preferencias
+
+
+def read_connection() -> dict:
+    """Lê o que foi lembrado da última conexão. Devolve {} se não houver nada."""
+    caminho = _connection_path()
+    if not caminho.exists():
+        return {}
+    try:
+        dados = json.loads(caminho.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return dados if isinstance(dados, dict) else {}
+
+
+def _connection_path() -> Path:
+    STORE_DIR.mkdir(parents=True, exist_ok=True)
+    return STORE_DIR / "conexao.json"
 
 
 def read_source(source_id: str) -> dict | None:

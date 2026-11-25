@@ -227,9 +227,12 @@ Reproduza com:
 - O Motor Offline cobre um **vocabulário controlado**; perguntas fora dele retornam
   "não entendi" (por design).
 - Sem login e sem multi-tenant nesta fase (uma instância por instituição).
-- Conexão a banco real já funciona na tela (SQLite/Postgres); faltam MySQL, botão
-  de testar conexão e seletor visual de tabelas. Google Sheets e dump `.sql` estão
-  no `ROADMAP.md`.
+- Conexão a banco real funciona na tela (SQLite/Postgres), com campos separados ou
+  URL, conexão lembrada (sem a senha) e seletor visual de tabelas. Falta MySQL.
+- Google Sheets público e upload de dump `.sql` funcionam na aba Dados. Dumps do
+  MySQL são convertidos automaticamente (`AUTO_INCREMENT`, `ENGINE`, tipos com
+  tamanho); rotinas, triggers e `DELIMITER` não são. Não há suporte a planilhas
+  privadas (exigiria OAuth) nem a dumps maiores que a memória da máquina.
 - Evoluções possíveis: ajuste de tipos de coluna na planilha, joins manuais entre arquivos,
   multiusuário, suporte a mais dialetos (SQL Server, Oracle).
 

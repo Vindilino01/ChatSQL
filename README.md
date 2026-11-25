@@ -26,6 +26,8 @@
 | Ver a sua responsabilidade | [ROADMAP.md](ROADMAP.md) e o guia da sua frente |
 | Entender o código | [docs/ARQUITETURA.md](docs/ARQUITETURA.md) |
 | **Escrever o relatório** | [RELATORIO.md](RELATORIO.md) |
+| **Mudar o visual (cores, fontes)** | [DESIGN.md](DESIGN.md) — o sistema visual com as regras |
+| **Entender o produto e o público** | [PRODUCT.md](PRODUCT.md) |
 | **Gerar o diagrama do banco** | [docs/mer/biblioteca.drawio](docs/mer/biblioteca.drawio) (abre no draw.io) |
 | **Conectar no banco da demonstração** | [docs/COMO-CONECTAR.md](docs/COMO-CONECTAR.md) |
 | **Ver os diagramas do banco** | [docs/mer/README.md](docs/mer/README.md) |
@@ -213,7 +215,7 @@ pip install -r requirements.txt    # pytest já incluído
 pytest
 ```
 
-Resultado atual: **196 testes passando, 6 guias desativados** (features do roadmap).
+Resultado atual: **256 testes passando, 2 guias desativados** (features do roadmap).
 
 Para medir a acurácia do motor no banco da biblioteca (precisa do `.env`):
 

@@ -55,6 +55,13 @@ Deixar o projeto **bonito e fácil de usar**: telas, cores, fontes, botões e gr
 | A **cor dos gráficos/tabela** | `app.py`, função `_render_result` |
 | O **texto das abas** (Chat/Dados/Configurações) | `app.py`, no final, função `main` |
 | As **sugestões de pergunta** | `chat_sql/nl/engine.py` (função `suggest_questions`) |
+| O **formulário de conexão** | `app.py`, funções `_render_database_form` e `_connect_database` |
+| O **seletor de tabelas** | `app.py`, função `_render_tabela_selector` |
+
+> **Antes de mudar cores ou fontes, leia [`DESIGN.md`](../../DESIGN.md).** Ele
+> registra a paleta, a escala tipográfica e as regras do sistema visual (por que o
+> número da resposta tem 58px, por que não há sombra). Sem isso, é fácil quebrar a
+> hierarquia sem perceber. O documento de produto é o [`PRODUCT.md`](../../PRODUCT.md).
 
 ## Como ver o resultado
 
@@ -72,9 +79,10 @@ Se o navegador já estiver aberto, aperte `Ctrl + F5` para carregar o visual nov
 
 ## Pronto quando
 
-- [ ] `pytest` verde.
-- [ ] A tela mudou como você queria e continua funcionando.
+- [x] `pytest` verde.
+- [x] A tela muda como você quer e continua funcionando.
 - [ ] Tirou um print e colocou em `docs/imagens/` (veja o [guia das imagens](../imagens/README.md)).
+- [x] O visual está documentado em [`DESIGN.md`](../../DESIGN.md).
 
 ## Mini-glossário
 

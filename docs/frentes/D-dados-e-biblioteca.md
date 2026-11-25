@@ -21,11 +21,11 @@ as formas de entrar com dados: planilhas, Google Sheets e dump `.sql`.
 | `scripts/apply_ddl.py` | **Pronto**: aplica o DDL no banco do `.env`. |
 | `chat_sql/sample_data.py` | Cria dados de exemplo automaticamente (a função `generate_sample_data`). |
 | `chat_sql/spreadsheet.py` | Lê planilhas CSV, XLSX e XLS. |
-| `chat_sql/sheets.py` | **A implementar**: ler planilha pública do Google Sheets. |
-| `chat_sql/sql_dump.py` | **A implementar**: importar arquivo `.sql`. |
+| `chat_sql/sheets.py` | Lê planilha pública do Google Sheets (link → CSV). |
+| `chat_sql/sql_dump.py` | Importa arquivo `.sql` (dump com ou sem dados). |
 | `tests/test_sample_data.py` | Testes dos dados de exemplo. |
 | `tests/test_spreadsheet.py` | Testes de planilhas. |
-| `tests/test_sheets.py` e `tests/test_sql_dump.py` | **Testes-guia** (estão com `skip`; remova o `skip` ao implementar). |
+| `tests/test_sheets.py` e `tests/test_sql_dump.py` | Testes das duas fontes novas (14 casos). |
 
 ## Primeira tarefa (passo a passo): criar o banco da biblioteca
 
@@ -79,15 +79,30 @@ O projeto já cria dados de exemplo automaticamente. Para aumentar a quantidade:
 
 ## Terceira tarefa: Google Sheets (D1) e dump `.sql` (D2)
 
-Os arquivos já existem como esqueleto, com comentários explicando o que fazer:
-- `chat_sql/sheets.py`: transformar o link de edição na URL de export CSV e baixar.
-- `chat_sql/sql_dump.py`: ler o arquivo e detectar se tem `CREATE TABLE` + `INSERT`.
+**Já estão implementados.** O que existe:
 
-Para cada um, existe um teste-guia pronto. **Remova o `skip`** e faça passar:
+- `chat_sql/sheets.py`: converte o link de edição do Google na URL de export CSV,
+  baixa e devolve o conteúdo. Trata planilha privada (403), link inválido, página
+  de login e resposta vazia — cada caso com mensagem própria em português.
+- `chat_sql/sql_dump.py`: detecta a codificação (UTF-8, latin-1, cp1252), confere
+  se há `CREATE TABLE` e classifica o arquivo em "dump com dados" ou "só
+  estrutura". Dump MySQL é convertido para SQLite antes de executar (o banco de
+  execução é SQLite em memória): `int(11)` → `INTEGER`, `VARCHAR(120)` → `TEXT`,
+  índices `KEY nome (col)` descartados, `INSERT`s preservados. Sem `CREATE TABLE`,
+  recusa com explicação.
+
+Na tela, os dois aparecem como opções próprias em **Dados**:
+**Google Sheets (link público)** e **Arquivo .sql (dump)**.
+
+Para conferir:
 ```powershell
-.\venv\Scripts\python -m pytest tests/test_sheets.py -v
-.\venv\Scripts\python -m pytest tests/test_sql_dump.py -v
+.\venv\Scripts\python -m pytest tests/test_sheets.py tests/test_sql_dump.py -v
+.\venv\Scripts\python -m pytest tests/test_fontes_novas.py -v
 ```
+
+O que **não** é suportado: planilha privada (exigiria login Google/OAuth) e dump
+maior que a memória da máquina. Se precisar de um desses, é trabalho novo, não um
+bug.
 
 ## Como testar
 
@@ -97,10 +112,10 @@ Para cada um, existe um teste-guia pronto. **Remova o `skip`** e faça passar:
 
 ## Pronto quando
 
-- [ ] `schemas/biblioteca.sql` existe e carrega no app.
-- [ ] Dá para gerar 10 mil registros sem erro.
-- [ ] `tests/test_sheets.py` e `tests/test_sql_dump.py` passam (sem `skip`).
-- [ ] A demo responde pelo menos 15 perguntas sobre a biblioteca.
+- [x] `schemas/biblioteca-postgres.sql` existe, foi aplicado no Neon e o app conecta.
+- [x] Dá para gerar milhares de registros sem erro (o seed real tem ~5.300).
+- [x] `tests/test_sheets.py` e `tests/test_sql_dump.py` passam (sem `skip`).
+- [x] A demo responde pelo menos 15 perguntas sobre a biblioteca (91 no total).
 
 ## Seed pronto (acervo real)
 

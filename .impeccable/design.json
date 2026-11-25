@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-25T00:00:00Z",
+  "title": "Design System: Chat SQL",
+  "extensions": {
+    "colorMeta": {
+      "nocturnal-bg": {
+        "role": "neutral",
+        "displayName": "Fundo Noturno",
+        "canonical": "#0b0d14",
+        "tonalRamp": ["#05060a", "#0b0d14", "#151824", "#212536", "#333850", "#565d78", "#8b93a7", "#d6dae6"]
+      },
+      "indigo-signal": {
+        "role": "primary",
+        "displayName": "Índigo Sinal",
+        "canonical": "#6366f1",
+        "tonalRamp": ["#12123a", "#1e1f66", "#2d2f99", "#4143cc", "#6366f1", "#8b8ff5", "#b6b9f9", "#e2e3fd"]
+      },
+      "indigo-deep": {
+        "role": "primary",
+        "displayName": "Índigo Profundo",
+        "canonical": "#4f46e5",
+        "tonalRamp": ["#0d0b33", "#1a165c", "#2b248f", "#3a32bd", "#4f46e5", "#7c75ec", "#aba6f3", "#dcdafa"]
+      },
+      "cyan-accent": {
+        "role": "secondary",
+        "displayName": "Ciano de Acento",
+        "canonical": "#22d3ee",
+        "tonalRamp": ["#062c33", "#0a4d59", "#0d7384", "#119cb3", "#22d3ee", "#63e2f4", "#9fedf8", "#daf9fd"]
+      },
+      "ink-primary": {
+        "role": "neutral",
+        "displayName": "Tinta Primária",
+        "canonical": "#f4f5fa",
+        "tonalRamp": ["#2a2c36", "#41444f", "#5b5e6b", "#787b88", "#969aa5", "#b6b9c2", "#d5d7dd", "#f4f5fa"]
+      },
+      "ink-muted": {
+        "role": "neutral",
+        "displayName": "Tinta Atenuada",
+        "canonical": "#8b93a7",
+        "tonalRamp": ["#1a1d26", "#2a2e3a", "#3d4250", "#545a6a", "#6f7585", "#8b93a7", "#b3b9c8", "#dde1e9"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Título do app no topo da página." },
+      "headline": { "displayName": "Headline", "purpose": "Marca na sidebar." },
+      "hero-number": { "displayName": "Número-Herói", "purpose": "O resultado escalar de uma consulta. Maior objeto da tela." },
+      "label": { "displayName": "Rótulo", "purpose": "Rótulos de cartão e metadados, em caixa alta." },
+      "mono": { "displayName": "Mono", "purpose": "SQL exibido no bloco de código." }
+    },
+    "shadows": [
+      {
+        "name": "user-bubble-glow",
+        "value": "0 8px 24px rgba(79,70,229,0.28)",
+        "purpose": "Halo colorido na fala do usuário. A única sombra do sistema."
+      }
+    ],
+    "motion": [
+      {
+        "name": "brightness-hover",
+        "value": "filter 150ms ease",
+        "purpose": "Único movimento permitido: o botão primário clareia no hover."
+      }
+    ],
+    "breakpoints": [
+      { "name": "projector", "value": "1450px" },
+      { "name": "short", "value": "800px" },
+      { "name": "sidebar", "value": "260px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botão Primário",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "A ação principal de um turno: executar o SQL.",
+      "html": "<button class=\"ds-btn-primary\">Executar consulta</button>",
+      "css": ".ds-btn-primary { background: linear-gradient(135deg,#6366f1,#4f46e5); color: #fff; border: none; border-radius: 10px; padding: 10px 18px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: filter 150ms ease; } .ds-btn-primary:hover { filter: brightness(1.1); } .ds-btn-primary:focus-visible { outline: 2px solid #a5b4fc; outline-offset: 2px; }"
+    },
+    {
+      "name": "Número-Herói",
+      "kind": "custom",
+      "description": "O resultado escalar de uma consulta, sem cartão nem ícone.",
+      "html": "<div class=\"ds-scalar\"><span class=\"ds-scalar-value\">456</span><span class=\"ds-scalar-label\">obras no acervo</span></div>",
+      "css": ".ds-scalar { display: flex; align-items: baseline; gap: 14px; padding: 18px 4px 10px; border-bottom: 1px solid rgba(255,255,255,0.07); background: #0b0d14; } .ds-scalar-value { font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 58px; font-weight: 700; line-height: 1; letter-spacing: -0.03em; color: #f4f5fa; font-variant-numeric: tabular-nums; } .ds-scalar-label { font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 14px; font-weight: 500; color: #8b93a7; padding-bottom: 6px; }"
+    },
+    {
+      "name": "Bolha do Usuário",
+      "kind": "custom",
+      "description": "A pergunta feita, alinhada à direita.",
+      "html": "<div class=\"ds-user\">quantos empréstimos estão atrasados?</div>",
+      "css": ".ds-user { background: linear-gradient(135deg,#6366f1,#4f46e5); color: #fff; padding: 12px 16px; border-radius: 16px 16px 4px 16px; max-width: 78%; width: fit-content; margin: 10px 0 8px auto; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; font-weight: 500; box-shadow: 0 8px 24px rgba(79,70,229,0.28); }"
+    },
+    {
+      "name": "Cartão de Apoio",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Bloco translúcido para informação secundária.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-label\">Fonte ativa</div><div class=\"ds-card-value\">Banco: postgres (7 tabelas)</div></div>",
+      "css": ".ds-card { background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.09); border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; } .ds-card-label { color: #8b93a7; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; } .ds-card-value { color: #e6e8ef; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 15px; font-weight: 600; }"
+    },
+    {
+      "name": "Chip de Fato",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Lista de números de apoio (tabelas, registros, amostra).",
+      "html": "<div class=\"ds-chip\">Registros <span>5.300</span></div>",
+      "css": ".ds-chip { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 7px 11px; margin-bottom: 6px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 13px; color: #cfd4e2; } .ds-chip span { color: #8b93a7; font-variant-numeric: tabular-nums; }"
+    },
+    {
+      "name": "Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Status curto, em formato pill.",
+      "html": "<span class=\"ds-badge\">somente leitura</span>",
+      "css": ".ds-badge { display: inline-block; padding: 3px 11px; border-radius: 999px; font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 12px; font-weight: 600; background: rgba(99,102,241,0.18); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.38); }"
+    },
+    {
+      "name": "Bloco de SQL",
+      "kind": "custom",
+      "description": "O SQL gerado, sempre visível antes de executar.",
+      "html": "<pre class=\"ds-sql\"><code>SELECT COUNT(*) AS total\nFROM \"livro\" AS t0;</code></pre>",
+      "css": ".ds-sql { background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px 16px; margin: 8px 0; overflow-x: auto; } .ds-sql code { font-family: 'IBM Plex Mono', monospace; font-size: 13px; line-height: 1.5; color: #e6e8ef; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "O Painel Noturno",
+    "overview": "A interface é um painel escuro onde uma coisa brilha por vez. O fundo quase preto carrega dois halos radiais de luz — índigo no canto superior esquerdo, azul no direito — como iluminação de palco antes da cena começar. Sobre esse cenário, o resultado da consulta aparece em tipografia grande e clara. Nada mais na tela tem permissão para competir com ele. O sistema é suave e preciso ao mesmo tempo: cantos generosos, superfícies translúcidas em vez de blocos opacos, e um índigo que aparece só onde há intenção.",
+    "keyCharacteristics": [
+      "Fundo escuro com dois halos de luz; nunca preto chapado.",
+      "Um único acento (índigo) usado em ≤10% da tela.",
+      "O número da resposta em 58px é o ponto de maior peso visual, sempre.",
+      "Metadados (linhas, colunas, tempo) em cinza fraco, abaixo de uma borda de 1px.",
+      "Superfícies translúcidas com borda de 1px, nunca sombra dura."
+    ],
+    "rules": [
+      { "name": "A Regra do Um Acento", "body": "O índigo aparece em no máximo 10% de qualquer tela. A raridade é o que faz o botão parecer o próximo passo.", "section": "colors" },
+      { "name": "A Regra do Cenário", "body": "Fundo e superfícies nunca competem com o conteúdo: se um cartão chama mais atenção que o número dentro dele, o cartão está errado.", "section": "colors" },
+      { "name": "A Regra do Número Nu", "body": "O número da resposta não recebe unidade inventada, prefixo ou sufixo decorativo. Se precisa de contexto, o contexto vai no rótulo ao lado, em 14px e cinza.", "section": "typography" },
+      { "name": "A Regra dos Numerais Tabulares", "body": "Todo número que representa dado usa font-variant-numeric: tabular-nums.", "section": "typography" },
+      { "name": "A Regra do Vidro, Não da Pedra", "body": "Superfícies elevam-se tornando-se mais claras e translúcidas, nunca projetando sombra escura.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do manter o número da resposta como o maior objeto da tela (58px, ou 44–46px no projetor).",
+      "Do usar numerais tabulares em todo número que vem do banco.",
+      "Do separar resposta de metadados com uma borda de 1px, nunca com um cartão.",
+      "Do deixar o SQL visível e copiável antes de qualquer execução.",
+      "Do usar o índigo em no máximo 10% da tela.",
+      "Do reduzir a sidebar para 260px em telas ≤1450px."
+    ],
+    "donts": [
+      "Don't colocar cartão, sombra ou ícone em volta do número-herói.",
+      "Don't usar ciano em texto de corpo, botão ou borda — só no gradiente do título.",
+      "Don't usar sombra escura para elevar superfícies; use transparência.",
+      "Don't exibir a senha do banco em texto puro nem gravá-la em disco.",
+      "Don't deixar metadados (linhas, colunas, tempo) com peso maior que a resposta.",
+      "Don't adicionar animação decorativa: o sistema é estático por decisão."
+    ]
+  }
+}

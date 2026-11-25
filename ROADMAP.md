@@ -1,6 +1,6 @@
 # ROADMAP — Chat SQL
 
-A base está pronta (133 testes). Falta isto, dividido em 5 frentes.
+O núcleo está pronto e verificado (240 testes). O que resta está dividido em 5 frentes.
 **Para entender cada frente em detalhe, abra o guia dela (link em cada título).**
 
 [Início](README.md) · [Índice da documentação](docs/README.md) · [Mapa: onde fica o quê](docs/ONDE-FICA-O-QUE.md)
@@ -29,12 +29,14 @@ A base está pronta (133 testes). Falta isto, dividido em 5 frentes.
 - Preencher o placar em `tests/eval/cases.json` e registrar a acurácia no `PRD.md`.
 
 **C — Interface e Design** — [guia completo](docs/frentes/C-interface-e-design.md)
-- Conexão já ligada na aba Dados (URL + conectar). Evoluir: botão "Testar
-  conexão", seletor visual de tabelas e salvar a conexão (sem a senha).
+- Feito: conexão na aba Dados com campos separados ou URL, conexão lembrada
+  (sem a senha) e seletor visual de tabelas.
+- Falta: capturas de tela em `docs/imagens/` e conferência em 1366×768.
 
 **D — Dados e biblioteca** — [guia completo](docs/frentes/D-dados-e-biblioteca.md)
-- Biblioteca: `schemas/biblioteca.sql` + gerador de 10k registros.
-- Google Sheets por link público (D1) e upload de `.sql` (D2).
+- Feito: biblioteca no Neon (456 obras reais, ~5.300 registros) e MER completo.
+- Feito: Google Sheets por link público (D1) e upload de `.sql` (D2), com testes.
+- Falta: revisão do texto do relatório (`RELATORIO.md`).
 
 **E — Entrega e apresentação** — [guia completo](docs/frentes/E-entrega-e-apresentacao.md)
 - `Dockerfile` + `docker compose up`.

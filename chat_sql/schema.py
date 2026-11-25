@@ -166,6 +166,31 @@ def _parse_column(coldef: exp.ColumnDef) -> tuple[Column, list[ForeignKey]]:
     return column, inline_fks
 
 
+def _is_index_clause(element: exp.ColumnDef) -> bool:
+    """True para `KEY nome (col)` / `INDEX nome (col)` de dump MySQL.
+
+    O sqlglot (lendo como SQLite) interpreta essa cláusula de índice como uma
+    definição de coluna chamada KEY/INDEX, com um tipo inventado e usuário.
+    Sem este filtro, o dump MySQL ganha uma coluna falsa `KEY` — que aparece na
+    interface e entra nos prompts.
+
+    A checagem é conservadora: só descarta quando o nome é KEY/INDEX **sem
+    aspas** e o tipo é o inventado (USER-DEFINED com parâmetros). Uma coluna
+    real `key` viria entre crases e com tipo de verdade.
+    """
+    if element.name.upper() not in ("KEY", "INDEX"):
+        return False
+    ident = element.this
+    if not isinstance(ident, exp.Identifier) or ident.args.get("quoted"):
+        return False
+    kind = element.args.get("kind")
+    return (
+        isinstance(kind, exp.DataType)
+        and kind.this == exp.DataType.Type.USERDEFINED
+        and bool(kind.expressions)
+    )
+
+
 def _parse_table(stmt: exp.Create) -> Table:
     schema_expr = stmt.this
     assert isinstance(schema_expr, exp.Schema)
@@ -176,6 +201,8 @@ def _parse_table(stmt: exp.Create) -> Table:
 
     def consume(element: exp.Expression) -> None:
         if isinstance(element, exp.ColumnDef):
+            if _is_index_clause(element):
+                return
             column, inline_fks = _parse_column(element)
             table.columns.append(column)
             foreign_keys.extend(inline_fks)
