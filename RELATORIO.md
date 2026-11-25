@@ -111,6 +111,11 @@ Neon.
 
 `[SUBSTITUIR a imagem pelo PNG gerado no draw.io — ver docs/mer/README.md]`
 
+> **A imagem acima ainda não existe.** Ela aparece quebrada até vocês gerarem:
+> draw.io → abrir `docs/mer/biblioteca.drawio` → Export PNG → salvar como
+> `docs/imagens/diagrama-er.png`. Passo a passo em
+> [`docs/imagens/README.md`](docs/imagens/README.md).
+
 ### 5.1 Modelo
 
 Sete tabelas, em terceira forma normal:
