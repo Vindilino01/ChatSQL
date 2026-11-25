@@ -27,12 +27,27 @@ Você tem **três caminhos**. O primeiro é o mais confiável.
 1. Abra <https://app.diagrams.net> (não precisa instalar nem criar conta)
 2. **File → Open From → Device…**
 3. Escolha [`biblioteca.drawio`](biblioteca.drawio)
-4. O diagrama aparece montado: 7 tabelas, colunas com PK/FK, 6 setas de relacionamento
+4. O diagrama aparece montado: 7 tabelas, colunas com **PK / FK / (nulo)**, e 6 setas
+   de relacionamento em notação pé-de-galinha
 5. **File → Export as → PNG** (marque *Transparent Background* desmarcado e *Zoom* 200% para ficar nítido)
 6. Salve em [`docs/imagens/`](../imagens/) como `diagrama-er.png`
 
 > As caixas vêm posicionadas, mas você pode arrastar para melhorar o layout.
-> Se mover uma caixa, as setas acompanham.
+> Se mover uma caixa, as setas acompanham e continuam presas à borda.
+
+**Como ler o diagrama:** cada seta sai da tabela que **guarda** a chave
+estrangeira e aponta para a tabela **referenciada**. A ponta em "pé de galinha"
+(três traços) fica no lado que pode ter muitos registros; a ponta simples, no
+lado do registro único. Exemplo: `EMPRÉSTIMO` (muitos) → `USUÁRIO` (um).
+
+As marcas entre colchetes:
+
+| Marca | Significado |
+|---|---|
+| `[PK]` | Chave primária — identifica a linha |
+| `[FK]` | Chave estrangeira — aponta para outra tabela |
+| `[PK, FK]` | As duas coisas (tabelas de ligação, como `LIVRO_AUTOR`) |
+| `[(nulo)]` | Campo opcional — aceita vazio |
 
 **Se o arquivo não abrir:** é sinal de que o download corrompeu (acontece no Windows ao salvar pelo navegador). Baixe de novo com `git pull` e abra direto do repositório.
 
