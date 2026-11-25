@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 
 from .config import FEWSHOT_MAX
-from .provider import LLMProvider, ProviderError
+from .provider import LLMProvider
 from .schema import Schema
 
 SYSTEM_PROMPT = """You are an expert SQLite query generator. Given a database schema and a user's question in natural language, produce exactly one read-only SELECT query that answers the question.

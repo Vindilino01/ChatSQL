@@ -11,7 +11,7 @@ import pytest
 
 from chat_sql.nl.engine import _is_measure_column, suggest_questions
 from chat_sql.offline import OfflineEngine
-from chat_sql.schema import Column, Schema, parse_schema
+from chat_sql.schema import Column, parse_schema
 
 BIBLIOTECA = parse_schema(
     """

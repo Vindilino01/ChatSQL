@@ -330,7 +330,6 @@ def test_single_table_name_collision_resolved_immediately():
     schema = parse_schema(
         "CREATE TABLE dados (id INTEGER PRIMARY KEY, cliente TEXT, total REAL);"
     )
-    engine = OfflineEngine()
     result = OfflineEngine().analyze("liste os dados de cliente", schema)
     assert result.sql is not None, result.error
     assert result.ambiguous == []

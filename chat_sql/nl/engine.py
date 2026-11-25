@@ -300,7 +300,6 @@ def _resolve_group(schema: Schema, question: str, subject: Table):
 
 
 def _resolve_columns(schema: Schema, question: str, subject: Table) -> list[tuple[Table, Column]]:
-    q_forms = question_forms(question)
     found: list[tuple[int, Table, Column]] = []
     candidates = [subject] + _related(schema, subject)
     for index, token in enumerate(question.split()):

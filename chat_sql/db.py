@@ -152,10 +152,10 @@ _TIPO_CANONICO = {
 
 def _montar_schema(tabelas, colunas, pk_map, fk_map) -> Schema:
     """Monta o Schema a partir dos dados já lidos do catálogo."""
-    por_tabela: dict[str, list[tuple[str, str]]] = {t: [] for t in tabelas}
+    por_tabela: dict[str, list[tuple[str, str, bool]]] = {t: [] for t in tabelas}
     for tabela, nome, tipo, nullable, _pos in colunas:
         if tabela in por_tabela:
-            por_tabela[tabela].append((nome, tipo))
+            por_tabela[tabela].append((nome, tipo, nullable == "NO"))
 
     tables: dict[str, Table] = {}
     ddl_parts: list[str] = []
@@ -164,12 +164,13 @@ def _montar_schema(tabelas, colunas, pk_map, fk_map) -> Schema:
         pk_cols = pk_map.get(tabela, set())
         cols: list[Column] = []
         ddl_lines: list[str] = []
-        for nome, tipo in por_tabela.get(tabela, []):
+        for nome, tipo, obrigatoria in por_tabela.get(tabela, []):
             canonico = _TIPO_CANONICO.get(str(tipo).lower(), "TEXT")
             cols.append(
                 Column(
                     name=nome,
                     type=canonico,
+                    not_null=obrigatoria,
                     primary_key=nome in pk_cols,
                 )
             )
