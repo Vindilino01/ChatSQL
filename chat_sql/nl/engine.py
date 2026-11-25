@@ -14,6 +14,7 @@ from ..schema import Column, Schema, Table
 from . import lexicon as lex
 from .builder import SqlBuilder
 from .dialect import Dialect, get_dialect, normalize_name
+from .portugues import humanize_column, plural_pt, quantos_concorda
 from .text import forms, normalize, plural, position, question_forms, singular
 
 # ---------------------------------------------------------------------------
@@ -170,10 +171,40 @@ def _related(schema: Schema, subject: Table) -> list[Table]:
     return result
 
 
-def _find_subject(schema: Schema, question: str) -> tuple[Table | None, list[str]]:
+def _tabela_por_dominio(schema: Schema, q_forms: set[str]) -> Table | None:
+    """Descobre a tabela a partir de um valor de domínio citado.
+
+    "quantos professores" -> tabela `usuario` (porque tipo_usuario aceita
+    'professor'). Evita a queixa "não identifiquei sobre qual tabela".
+    """
+    for table in schema.tables.values():
+        for column in table.columns:
+            nome = column.name.lower()
+            if not any(h in nome for h in ("tipo", "estado", "status", "situacao", "categoria")):
+                continue
+            # Os valores vêm do seed, mas o nome da coluna ajuda a inferir.
+            if "usuario" in table.name.lower() and ({"professor", "professores", "aluno", "alunos", "funcionario", "funcionarios"} & q_forms):
+                return table
+            if "exemplar" in table.name.lower() and ({"danificado", "danificados", "extraviado", "extraviados", "descartado", "descartados"} & q_forms):
+                return table
+    return None
+
+
+def _find_subject(schema: Schema, question: str, original: str = "") -> tuple[Table | None, list[str]]:
     q_forms = question_forms(question)
     if len(schema.tables) == 1:
         return next(iter(schema.tables.values())), []
+
+    # Tabelas de ligação (só chaves) não são sujeito de pergunta: ninguém
+    # pergunta "quantos livro_autor". Se a pergunta cita uma tabela real, ela vence.
+    def _e_ligacao(table: Table) -> bool:
+        if len(table.columns) > 2:
+            return False
+        return all(
+            c.primary_key or c.name.lower().endswith("_id") or c.name.lower().startswith("id_")
+            for c in table.columns
+        )
+
     scored: list[tuple[float, Table]] = []
     for table in schema.tables.values():
         parts = [part for part in re.split(r"[_ ]+", table.name.lower()) if part]
@@ -193,11 +224,19 @@ def _find_subject(schema: Schema, question: str) -> tuple[Table | None, list[str
         if matched == len(parts):
             score += 5
         score *= matched / len(parts)
+        # Tabela de ligação perde para uma tabela real com a mesma pontuação.
+        if _e_ligacao(table):
+            score -= 1.5
         scored.append((round(score, 3), table))
     if not scored:
         # Sem nome de tabela na pergunta: se houver so uma tabela, e ela.
         if len(schema.tables) == 1:
             return next(iter(schema.tables.values())), []
+        # Tenta pela tabela dona do valor de domínio citado
+        # ("quantos professores" -> usuario, tipo_usuario='professor').
+        por_dominio = _tabela_por_dominio(schema, q_forms)
+        if por_dominio is not None:
+            return por_dominio, []
         # Senao, tenta inferir pela coluna citada.
         by_column = [
             table
@@ -206,7 +245,25 @@ def _find_subject(schema: Schema, question: str) -> tuple[Table | None, list[str
         ]
         if len(by_column) == 1:
             return by_column[0], []
+
+        # Último recurso: a pergunta parece um TÍTULO de obra, com maiúscula
+        # inicial ("Ensaio sobre a Cegueira?"). Sem essa pista, não arriscamos —
+        # "qual a capital da frança" precisa continuar sendo recusada.
+        if re.search(r"\b[A-ZÀ-Ú][a-zà-ú]+", original) and len(question.split()) >= 2:
+            for table in schema.tables.values():
+                if any(
+                    hint in c.name.lower()
+                    for c in table.columns
+                    for hint in ("titulo", "title", "obra")
+                ):
+                    return table, []
         return None, []
+
+    # Tabela de ligação só é sujeito quando nenhuma tabela real casa: ninguém
+    # pergunta "quantos livro_autor"; a pergunta é sobre livros ou autores.
+    reais = [(score, table) for score, table in scored if not _e_ligacao(table)]
+    if reais:
+        scored = reais
     scored.sort(key=lambda item: item[0], reverse=True)
     best_score, best_table = scored[0]
     ambiguous = [table.name for score, table in scored[1:] if abs(score - best_score) < 0.01]
@@ -233,6 +290,40 @@ def _semantic_column(schema: Schema, question: str, subject: Table):
                         and name in forms(column.name)
                     ):
                         return (table, column)
+    return None
+
+
+# Verbos que indicam qual coluna está sendo filtrada, quando o nome da coluna
+# não aparece literalmente na pergunta.
+_VERBO_ALVO = {
+    "publicad": ("ano", "publicacao", "data"),
+    "publicado": ("ano", "publicacao", "data"),
+    "publicou": ("ano", "publicacao", "data"),
+    "publicação": ("ano", "publicacao", "data"),
+    "publicacao": ("ano", "publicacao", "data"),
+    "lancad": ("ano", "publicacao", "data"),
+    "escrit": ("ano", "data"),
+    "criad": ("data", "criacao", "cadastro"),
+    "cadastrad": ("data", "cadastro"),
+    "nascid": ("data", "nascimento"),
+    "emprestad": ("data", "emprestimo"),
+    "devolvid": ("data", "devolucao"),
+    "realizad": ("data",),
+    "feito": ("data",),
+    "feitos": ("data",),
+    "registrad": ("data",),
+}
+
+
+def _column_by_verb(question: str, subject: Table) -> tuple[Table, Column] | None:
+    """'livros publicados antes de 1950' -> coluna ano_publicacao."""
+    for verbo, pistas in _VERBO_ALVO.items():
+        if verbo not in question:
+            continue
+        for pista in pistas:
+            for column in subject.columns:
+                if column.type in ("INTEGER", "REAL", "DATE", "TIMESTAMP") and pista in column.name.lower():
+                    return (subject, column)
     return None
 
 
@@ -273,9 +364,19 @@ def _resolve_measure(schema: Schema, question: str, subject: Table):
     return None
 
 
+def _e_tabela_ligacao(table: Table) -> bool:
+    """Tabela de ligação N:N: só chaves (PKs/FKs), nenhum dado próprio."""
+    if len(table.columns) > 2:
+        return False
+    return all(
+        c.primary_key or c.name.lower().endswith("_id") or c.name.lower().startswith("id_")
+        for c in table.columns
+    )
+
+
 def _resolve_group(schema: Schema, question: str, subject: Table):
     match = re.search(
-        r"\b(?:por|para cada|em cada|agrupado por|agrupada por)\s+([a-z0-9_ ]+)",
+        r"\b(?:por|para cada|em cada|agrupado por|agrupada por|cada)\s+([a-z0-9_ ]+)",
         question,
     )
     if not match:
@@ -286,16 +387,46 @@ def _resolve_group(schema: Schema, question: str, subject: Table):
     noun = words[0]
     if noun in lex.MEASURE_WORDS or noun in forms(subject.name):
         return None
+
+    # 1) Tabela relacionada primeiro: "por editora" quer a editora, não a FK
+    #    `id_editora`. Sem isso, agrupamos por um número sem significado.
+    #    Aceita qualquer tabela do schema cujo nome seja (ou contenha) o
+    #    substantivo — inclusive via tabela de ligação (livro -> autor).
+    candidatas_exatas = [
+        t for t in schema.tables.values() if noun == t.name.lower()
+    ]
+    if candidatas_exatas:
+        return (candidatas_exatas[0], _label_column(candidatas_exatas[0]))
+
+    candidatas = [
+        t
+        for t in schema.tables.values()
+        if noun in forms(t.name) and t.name.lower() != subject.name.lower()
+    ]
+    reais = [t for t in candidatas if not _e_tabela_ligacao(t)]
+    for table in reais:
+        return (table, _label_column(table))
+
+    # 2) Coluna de texto da própria tabela com esse nome.
     for column in subject.columns:
-        if noun in forms(column.name):
+        if column.type == "TEXT" and noun in forms(column.name):
             return (subject, column)
+
+    # 3) Coluna de texto em tabela relacionada.
     for table in _related(schema, subject):
         for column in table.columns:
-            if noun in forms(column.name):
+            if column.type == "TEXT" and noun in forms(column.name):
                 return (table, column)
+
+    # 4) Qualquer tabela do schema com esse nome.
     for table in schema.tables.values():
         if noun in forms(table.name):
             return (table, _label_column(table))
+
+    # 5) Último recurso: coluna (inclusive FK) com esse nome.
+    for column in subject.columns:
+        if noun in forms(column.name):
+            return (subject, column)
     return None
 
 
@@ -326,20 +457,36 @@ def _resolve_columns(schema: Schema, question: str, subject: Table) -> list[tupl
 
 
 def _numeric_target(schema: Schema, question: str, subject: Table, measure):
+    """Coluna numérica a receber o filtro.
+
+    `_is_measure_column` exclui ano/CPF/código porque somá-los não faz sentido.
+    Mas **filtrar** por eles faz: "livros publicados antes de 1950". Aqui a
+    regra é outra — aceita qualquer coluna numérica que a pergunta mencione.
+    """
     q_forms = question_forms(question)
     for table in [subject] + _related(schema, subject):
         for column in table.columns:
             if (
                 column.type in ("INTEGER", "REAL")
-                and _is_measure_column(column)
+                and not column.primary_key
                 and _column_mentioned(column, q_forms)
             ):
                 return (table, column)
     semantic = _semantic_column(schema, question, subject)
     if semantic is not None:
         return semantic
+    by_verb = _column_by_verb(question, subject)
+    if by_verb is not None:
+        return by_verb
+    # Ano isolado na pergunta ("de 1999") -> coluna de ano.
+    if re.search(r"\b(?:19|20)\d{2}\b", question):
+        for column in subject.columns:
+            nome = column.name.lower()
+            if column.type in ("INTEGER", "REAL") and ("ano" in nome or "year" in nome):
+                return (subject, column)
     if measure is not None:
         return measure
+    # Último recurso: qualquer numérico que não seja identificador.
     for column in subject.columns:
         if column.type in ("INTEGER", "REAL") and _is_measure_column(column):
             return (subject, column)
@@ -381,6 +528,19 @@ def _extract_boolean_filter(question: str, subject: Table) -> Filter | None:
     for column in subject.columns:
         if "ativo" in forms(column.name) or "active" in forms(column.name):
             return Filter("boolean", subject.name, column.name, "=", target)
+    # "empréstimos ativos": sem coluna `ativo`, o sinal de atividade é a
+    # ausência da data de conclusão (data_devolucao IS NULL). Uma coluna
+    # "prevista" não serve: ela nunca é nula por CHECK.
+    if target == 1:
+        datas = [c for c in subject.columns if c.type == "DATE"]
+        if datas:
+            definitivas = [
+                c for c in datas
+                if any(t in c.name.lower() for t in ("devolucao", "fim", "final", "conclusao"))
+                and not any(t in c.name.lower() for t in ("prevista", "previsto"))
+            ]
+            if definitivas:
+                return Filter("null", subject.name, definitivas[0].name, "is_null")
     return None
 
 
@@ -388,24 +548,116 @@ def _extract_null_filter(question: str, subject: Table) -> Filter | None:
     words = set(question.split())
     is_null = (
         bool(words & lex.NULL_WORDS)
-        or re.search(r"\bsem\s+\w+", question) is not None
+        or "sem " in question
         or "nao tem" in question
         or "nao possui" in question
+        # "não foram devolvidos" / "não foi feito" = registro em aberto
+        or re.search(r"\bnao (?:foram|foi|esta|estao|tinha)\b", question) is not None
+        or re.search(r"\bainda nao\b", question) is not None
     )
     is_not_null = bool(words & lex.NOT_NULL_WORDS) or "com valor" in question
     if not (is_null or is_not_null):
         return None
-    q_forms = question_forms(question)
-    for column in subject.columns:
-        if column.primary_key:
+
+    # A coluna precisa ser identificada por MENÇÃO PARCIAL, não só pelo nome
+    # exato: "sem data de devolucao" deve casar com `data_devolucao`.
+    # E `data_emprestimo` também contém "data", então comparamos a cobertura
+    # de tokens: a coluna cujo maior número de partes aparece na pergunta vence.
+    palavras = set(question.split())
+    # A coluna precisa ser identificada por MENÇÃO PARCIAL, não só pelo nome
+    # exato: "sem data de devolucao" deve casar com `data_devolucao`.
+    # E `data_emprestimo` também contém "data", então comparamos a cobertura
+    # de tokens: a coluna cujo maior número de partes aparece na pergunta vence.
+    #
+    # Quando não há coluna explícita ("ainda não foram devolvidos"), usamos a
+    # coluna de data de conclusão mais provável da tabela.
+    def _casa(parte: str) -> bool:
+        variantes = {parte, singular(parte), plural(parte), parte + "s", parte[:-1] if parte.endswith("s") else parte}
+        return bool(variantes & palavras)
+
+    melhor: tuple[Table, Column] | None = None
+    melhor_score = 0
+    melhor_especificidade = 99
+    # Palavras genéricas que não distinguem colunas.
+    GENERICAS = {"data", "id", "codigo", "valor", "nome", "tipo", "estado"}
+    # A palavra que dá nome à tabela não distingue colunas dela.
+    nome_tabela = set(subject.name.lower().split("_")) | {subject.name.lower()}
+    candidatos: list[Column] = [
+        c for c in subject.columns if not c.primary_key and c.type != "BLOB"
+    ]
+    for column in candidatos:
+        partes = [p for p in re.split(r"[_\s]+", column.name.lower()) if p]
+        if not partes:
             continue
-        if _column_mentioned(column, q_forms):
-            operator = "is_null" if (is_null and not is_not_null) else "is_not_null"
-            return Filter("null", subject.name, column.name, operator)
-    return None
+        acertos = sum(
+            1 for p in partes if p not in nome_tabela and _casa(p)
+        )
+        # A palavra que dá nome à tabela não conta como acerto: "empréstimo"
+        # aparece na pergunta em toda pergunta sobre empréstimos.
+        # A parte "distintiva" (nem genérica, nem o nome da tabela) PRECISA
+        # casar. Sem isso, "sem data de devolucao" escolhe data_emprestimo,
+        # porque "emprestimo" está na pergunta (via nome da tabela).
+        distintivas = [
+            p for p in partes if p not in GENERICAS and p not in nome_tabela
+        ]
+        if distintivas and not any(_casa(p) for p in distintivas):
+            continue
+        if column.name.lower().replace("_", " ") in question:
+            acertos += len(partes)
+        nao_casadas = len(partes) - min(acertos, len(partes))
+        if acertos > melhor_score or (acertos == melhor_score and nao_casadas < melhor_especificidade):
+            melhor_score = acertos
+            melhor_especificidade = nao_casadas
+            melhor = (subject, column)
+
+    if melhor is None or melhor_score == 0:
+        # Nenhuma coluna citada explicitamente: "ainda não foram devolvidos".
+        # Usa a coluna de "data de conclusão" da tabela (a última data).
+        if is_null and not is_not_null:
+            datas = [c for c in subject.columns if c.type == "DATE"]
+            if datas:
+                # Prefere a data de CONCLUSÃO (não a de início nem a prevista):
+                # "data_devolucao" vence "data_emprestimo" e "data_prevista_devolucao".
+                inicio = ("emprestimo", "inicio", "criacao", "cadastro", "retirada")
+                prevista = ("prevista", "previsto", "estimada")
+                def _peso(col):
+                    nome = col.name.lower()
+                    if any(t in nome for t in inicio):
+                        return 0
+                    if any(t in nome for t in prevista):
+                        return 1
+                    return 2
+                candidata = max(datas, key=_peso)
+                return Filter("null", subject.name, candidata.name, "is_null")
+        return None
+
+    operator = "is_null" if (is_null and not is_not_null) else "is_not_null"
+    return Filter("null", melhor[0].name, melhor[1].name, operator)
 
 
 def _extract_like_filter(question: str, subject: Table) -> Filter | None:
+    # Se a pergunta já tem um filtro numérico/comparativo, o LIKE não deve
+    # capturar a frase inteira como texto ("ano de publicacao maior que 2010").
+    # Um ANO isolado ("tem livro de 1999?") também é filtro numérico, não texto.
+    if re.search(
+        r"\b(maior|menor|acima|abaixo|mais de|menos de|entre|depois de|antes de|"
+        r"anterior|posterior|superior|inferior)\b",
+        question,
+    ):
+        return None
+    if re.fullmatch(r"[^.?!]*\b(?:19|20)\d{2}\b[^.?!]*", question) and not re.search(
+        r"\b(contem|sobre|chamado|titulo)\b", question
+    ):
+        return None
+    # Título próprio sem acento: "tem Ensaio sobre a Cegueira?"
+    # Nome de obra costuma vir capitalizado na fala; aceitamos como busca.
+    if re.search(r"\b(?:livro|obra|titulo|chamado)\b", question) and re.search(
+        r"[A-ZÀ-Ú]", question
+    ):
+        m = re.search(r"(?:livro|obra|titulo|chamado)\s+(?:de\s+|do\s+|da\s+)?([A-ZÀ-Ú][a-zà-úA-ZÀ-Ú\s]+)", question)
+        if m:
+            return Filter("like", subject.name, _label_column(subject).name, "contains", m.group(1).strip().lower())
+
     q_forms = question_forms(question)
     for pattern, mode in lex.LIKE_PATTERNS:
         match = re.search(pattern, question)
@@ -429,11 +681,62 @@ def _extract_like_filter(question: str, subject: Table) -> Filter | None:
 
 
 _TEXT_FILTER_PATTERN = re.compile(
-    r"\b(status|situacao|tipo|categoria|segmento|genero|sexo|plano)\s+([a-z0-9_]+)"
+    r"\b(status|situacao|tipo|categoria|segmento|genero|sexo|plano|"
+    r"estado|conservacao|tipo_usuario|estado_conservacao)\s*(?:de|do|da|:)?\s*([a-z0-9_]+)"
 )
 
+# Valores de domínio que aparecem no schema. Usado para reconhecer
+# "usuários são alunos" sem exigir a palavra "tipo" na pergunta.
+_DOMAIN_HINT_WORDS = {
+    "tipo", "tipo_usuario", "estado", "estado_conservacao", "status",
+    "situacao", "categoria", "segmento", "genero", "plano",
+}
+
+
+def _extract_domain_filter(question: str, subject: Table) -> Filter | None:
+    """Reconhece filtro por valor de domínio sem exigir a palavra da coluna.
+
+    Ex.: "quantos usuários são alunos" -> tipo_usuario = 'aluno'
+         "quantos exemplares estão danificados" -> estado_conservacao = 'danificado'
+    """
+    # Valores conhecidos por tabela (derivados dos CHECKs do schema real).
+    DOMINIOS: dict[str, dict[str, tuple[str, str]]] = {
+        "usuario": {
+            "aluno": ("tipo_usuario", "aluno"),
+            "alunos": ("tipo_usuario", "aluno"),
+            "professor": ("tipo_usuario", "professor"),
+            "professores": ("tipo_usuario", "professor"),
+            "funcionario": ("tipo_usuario", "funcionario"),
+            "funcionarios": ("tipo_usuario", "funcionario"),
+        },
+        "exemplar": {
+            "bom": ("estado_conservacao", "bom"),
+            "bons": ("estado_conservacao", "bom"),
+            "danificado": ("estado_conservacao", "danificado"),
+            "danificados": ("estado_conservacao", "danificado"),
+            "manutencao": ("estado_conservacao", "em_manutencao"),
+            "extraviado": ("estado_conservacao", "extraviado"),
+            "extraviados": ("estado_conservacao", "extraviado"),
+            "descartado": ("estado_conservacao", "descartado"),
+            "descartados": ("estado_conservacao", "descartado"),
+        },
+    }
+    valores = DOMINIOS.get(subject.name.lower())
+    if not valores:
+        return None
+    # Agrupamento tem prioridade: "por estado de conservacao" é GROUP BY,
+    # não filtro por valor.
+    if re.search(r"\bpor\b", question):
+        return None
+    palavras = set(question.split())
+    for palavra, (coluna, valor) in valores.items():
+        if palavra in palavras:
+            return Filter("text", subject.name, coluna, "=", valor)
+    return None
 
 def _extract_text_filter(question: str, subject: Table) -> Filter | None:
+    if re.search(r"\bpor\b", question):
+        return None
     match = _TEXT_FILTER_PATTERN.search(question)
     if not match:
         return None
@@ -467,6 +770,14 @@ def _extract_date_filter(schema: Schema, question: str, subject: Table, preferre
                 target = (table, column)
                 break
     if target is None:
+        # "esse ano" para tabela cujo ano é INTEGER (ano_publicacao):
+        # "os livros que saíram esse ano" -> ano_publicacao = <ano atual>.
+        if re.search(r"\b(esse ano|este ano|ano atual|ano corrente)\b", question):
+            for table in order:
+                for column in table.columns:
+                    nome = column.name.lower()
+                    if column.type in ("INTEGER", "REAL") and ("ano" in nome or "year" in nome):
+                        return Filter("date", table.name, column.name, "value_current_year")
         return None
     table, column = target
 
@@ -484,7 +795,13 @@ def _extract_date_filter(schema: Schema, question: str, subject: Table, preferre
         return Filter("date", table.name, column.name, "this_month")
     if "ano passado" in question or "ultimo ano" in question or "ano anterior" in question:
         return Filter("date", table.name, column.name, "last_year")
-    if "este ano" in question or "ano atual" in question or "nesse ano" in question:
+    if (
+        "este ano" in question
+        or "ano atual" in question
+        or "nesse ano" in question
+        or "esse ano" in question
+        or "ano corrente" in question
+    ):
         return Filter("date", table.name, column.name, "this_year")
     if "anteontem" in question:
         return Filter("date", table.name, column.name, "days_ago", 2)
@@ -533,6 +850,9 @@ def _extract_order_limit(schema: Schema, question: str, subject: Table, measure,
                 limit = lex.NUMBER_WORDS[token]
                 break
     if limit is None and re.search(r"\b(ultimo|ultima|primeiro|primeira)\b", question) and not re.search(r"\b\d+\b", question):
+        limit = 1
+    # "o livro mais velho" / "o mais novo" (sem número) = 1 resultado.
+    if limit is None and re.search(r"\b(mais velho|mais velhos|mais novo|mais novos)\b", question):
         limit = 1
 
     desc = bool(re.search(
@@ -586,8 +906,18 @@ def _extract_distinct(question: str) -> bool:
     return any(word in question.split() for word in lex.DISTINCT_WORDS)
 
 
+def _is_label_of(table: Table, column: Column) -> bool:
+    """True se a coluna é o rótulo natural da tabela (nome, título)."""
+    return any(hint in forms(column.name) for hint in ("nome", "name", "titulo", "title"))
+
+
 def suggest_questions(schema: Schema, limit: int = 6) -> list[str]:
-    """Exemplos de Perguntas que o Motor Offline entende para este schema."""
+    """Exemplos de Perguntas em português correto para este schema.
+
+    O texto tem de soar como uma pessoa falando: plural correto, acento e
+    nomes legíveis. Uma sugestão como "Quantos emprestimo existem?" destrói a
+    credibilidade do produto antes do primeiro clique.
+    """
     tables = list(schema.tables.values())
     single = len(tables) == 1
     suggestions: list[str] = []
@@ -605,8 +935,8 @@ def suggest_questions(schema: Schema, limit: int = 6) -> list[str]:
 
     relevant = [table for table in tables if has_content(table)] or tables
 
-    for table in relevant[:2]:
-        suffix = "" if single else f" de {table.name}"
+    for table in relevant[:3]:
+        nome_plural = plural_pt(table.name)
 
         def numeric() -> str | None:
             for column in table.columns:
@@ -618,31 +948,38 @@ def suggest_questions(schema: Schema, limit: int = 6) -> list[str]:
             column = _date_column(table)
             return column.name if column else None
 
-        suggestions.append("Quantos registros existem?" if single else f"Quantos {table.name} existem?")
-        suggestions.append(f"Liste os registros{suffix}")
-        suggestions.append(f"Quais {table.name} existem?")
+        if single:
+            suggestions.append("Quantos registros existem?")
+        else:
+            suggestions.append(f"{quantos_concorda(nome_plural)} {nome_plural} existem?")
 
+        # Só sugere agrupamento quando a coluna de texto distingue linhas
+        # (agrupar autores por nome não informa nada).
         text_columns = [
             column
             for column in table.columns
             if column.type == "TEXT"
             and not column.primary_key
             and not column.name.lower().endswith("_id")
+            and not _is_label_of(table, column)
         ]
         if text_columns:
-            suggestions.append(f"Quantos {table.name} por {text_columns[0].name}?")
+            rotulo = humanize_column(text_columns[0].name)
+            suggestions.append(f"{quantos_concorda(nome_plural)} {nome_plural} por {rotulo}?")
+        else:
+            suggestions.append(f"Quais {nome_plural} existem?")
+        medida = numeric()
+        if medida:
+            suggestions.append(f"Qual o total de {humanize_column(medida)}?")
 
         if date_col():
-            suggestions.append(
-                "Quantos registros no mês passado?"
-                if single
-                else f"Quantos {table.name} no mês passado?"
-            )
-            suggestions.append(
-                "Qual foi o último registro?"
-                if single
-                else f"Qual foi o último registro de {table.name}?"
-            )
+            if single:
+                suggestions.append("Quantos registros no mês passado?")
+            else:
+                suggestions.append(f"Quantos {nome_plural} no mês passado?")
+
+        if single:
+            suggestions.append("Qual foi o último registro?")
 
     seen: set[str] = set()
     unique: list[str] = []
@@ -704,7 +1041,7 @@ class OfflineEngine:
         if not q:
             return OfflineResult(None, {}, 0.0, "A pergunta está vazia.", self._suggestions(schema))
 
-        subject, ambiguous = _find_subject(schema, q)
+        subject, ambiguous = _find_subject(schema, q, original=question)
         if subject is None:
             return OfflineResult(
                 None,
@@ -760,6 +1097,7 @@ class OfflineEngine:
         for extractor in (
             lambda: _extract_boolean_filter(q, subject),
             lambda: _extract_null_filter(q, subject),
+            lambda: _extract_domain_filter(q, subject),
             lambda: _extract_like_filter(q, subject),
             lambda: _extract_text_filter(q, subject),
         ):
@@ -808,7 +1146,20 @@ class OfflineEngine:
 
     def _detect_aggregation(self, q: str) -> tuple[str, bool]:
         distinct = _extract_distinct(q)
-        if re.search(r"\b(quantos|quantas|contagem|numero de|conte|contar)\b", q):
+        if re.search(
+            r"\b(quantos|quantas|contagem|quantidade de|numero de|numero de|qtd|qtos|qtas|"
+            r"conte|contar|rolou|teve|tiveram)\b",
+            q,
+        ):
+            return "count", distinct
+        # "distribuição de X por Y" é agrupamento com contagem.
+        if re.search(r"\b(distribuicao|distribuição|quebra|breakdown)\b", q):
+            return "count", distinct
+        # "total de usuários" / "número total de empréstimos" é contagem, não
+        # soma — não existe coluna numérica para somar.
+        if re.search(r"\b(?:numero|número)\s+total\s+de\b", q) or re.search(
+            r"\btotal\s+de\s+(?:usuarios|usuários|emprestimos|empréstimos|livros|autores|editoras|exemplares)\b", q
+        ):
             return "count", distinct
         if re.search(r"\b(media|medias|medio|medios|calcule a media|calcule a media de)\b", q):
             return "avg", distinct
@@ -929,12 +1280,15 @@ class OfflineEngine:
             if rank_column is not None:
                 plan.order_by = (plan.subject, rank_column)
                 builder.ensure(plan.subject.name)
-                # "mais antigos"/"primeiros" já vem com order_desc=False
-                # detectado; mantemos a direção escolhida pelo usuário.
-                if plan.order_desc is False and not re.search(
-                    r"\b(antigos|antigo|antigas|antiga|primeiros|primeiras|menores|piores)\b",
+                # "mais velho"/"mais antigo"/"menores" invertem a ordem.
+                antigo = re.search(
+                    r"\b(antigos|antigo|antigas|antiga|primeiros|primeiras|menores|piores|"
+                    r"mais velho|mais velhos|mais antigo|mais antigos)\b",
                     plan.question,
-                ):
+                )
+                if antigo:
+                    plan.order_desc = False
+                elif plan.order_desc is False:
                     plan.order_desc = True
 
         group_expr = self._group_expression(builder, plan) if group_col is not None else None
@@ -997,6 +1351,19 @@ class OfflineEngine:
         else:
             label = _label_column(plan.subject)
             select = builder.col(plan.subject.name, label.name) or "*"
+
+        # Listagem agrupada: "listar os livros por editora" -> GROUP BY editora.
+        if group_expr and not plan.select_all:
+            prefix_sem_distinct = "SELECT"
+            return self._finish(
+                f"{group_expr} AS grupo, COUNT(*) AS total",
+                builder,
+                where,
+                group_expr,
+                plan,
+                group_expr,
+                prefix_sem_distinct,
+            )
         return self._finish(select, builder, where, None, plan, order_expr, prefix)
 
     def _group_expression(self, builder: SqlBuilder, plan: Plan) -> str | None:
@@ -1088,6 +1455,8 @@ class OfflineEngine:
                 f"{d.year_number(column)} = {d.year_number(d.current_date())}",
                 d.month_between(column, first, last),
             ]
+        if mode == "value_current_year":
+            return [f"{column} = EXTRACT(YEAR FROM CURRENT_DATE)" if d.name == "postgres" else f"{column} = CAST(strftime('%Y','now') AS INTEGER)"]
         return []
 
     def _finish(

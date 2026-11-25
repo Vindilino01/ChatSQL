@@ -22,7 +22,7 @@
     },
     {
       "question": "Quantos produtos existem por categoria?",
-      "expected_sql": "SELECT categoria_id, COUNT(*) AS total FROM produtos GROUP BY categoria_id;"
+      "expected_sql": "SELECT categorias.nome, COUNT(*) AS total FROM produtos JOIN categorias ON categorias.id = produtos.categoria_id GROUP BY categorias.nome;"
     }
   ],
   "rh": [
@@ -40,7 +40,7 @@
     },
     {
       "question": "Quantos funcionarios existem por departamento?",
-      "expected_sql": "SELECT c.departamento_id, COUNT(*) AS total FROM funcionarios f JOIN cargos c ON f.cargo_id = c.id GROUP BY c.departamento_id;"
+      "expected_sql": "SELECT departamentos.nome, COUNT(*) AS total FROM funcionarios JOIN cargos ON cargos.id = funcionarios.cargo_id JOIN departamentos ON departamentos.id = cargos.departamento_id GROUP BY departamentos.nome;"
     }
   ],
   "vendas": [
@@ -58,7 +58,7 @@
     },
     {
       "question": "Quantas vendas existem por representante?",
-      "expected_sql": "SELECT representante_id, COUNT(*) AS total FROM vendas GROUP BY representante_id;"
+      "expected_sql": "SELECT representantes.nome, COUNT(*) AS total FROM vendas JOIN representantes ON representantes.id = vendas.representante_id GROUP BY representantes.nome;"
     }
   ]
 }

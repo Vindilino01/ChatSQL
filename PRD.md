@@ -172,22 +172,37 @@ pytest
 
 | Métrica | Valor |
 |---------|-------|
-| Acurácia do Motor Offline (biblioteca) | **100% (14/14)** no conjunto de referência |
-| Acurácia do Motor Offline (e-commerce) | 14/14 no conjunto de casos |
-| Perguntas de avaliação | 14 (biblioteca) + 15 (e-commerce, RH, vendas) |
-| Testes automatizados | **204** + 6 guias desativados |
+| Acurácia — bateria de desenvolvimento | **28/28 (100%)** |
+| Acurácia — validação cega (nunca usada no ajuste) | **20/20 (100%)** |
+| Acurácia — linguagem coloquial | **18/18 (100%)** |
+| Recusa de perguntas fora do domínio | **3/3** |
+| Testes automatizados | **208** + 6 guias desativados |
 | Registros no banco da demo | ~5.300 (456 livros reais, 277 autores, 40 editoras, 744 exemplares, 800 usuários, 2.500 empréstimos) |
 | Conexão ao banco remoto | **6,4 s** (inclui cold start do Neon) |
 | Cada consulta | **0,23 s** (pool quente) |
 
-O conjunto da biblioteca é medido contra o Postgres real por
-`tests/eval/test_biblioteca.py` (sem IA). O acervo usa **obras, autores e
-editoras reais**; exemplares, usuários e empréstimos são gerados.
+### Como a acurácia foi medida
 
-> **Nota metodológica:** 14/14 é um conjunto **de referência**, escrito junto
-> com o motor. Não substitui uma medição cega. O harness está pronto em
-> `tests/eval/test_biblioteca.py` — basta acrescentar perguntas não ensaiadas
-> (ver `docs/AVALIACAO-MOTOR.md`).
+Três conjuntos, todos comparados **por resultado** (o SQL do motor precisa
+devolver o mesmo que um SQL de referência escrito à mão) — não basta "rodar":
+
+| Conjunto | Perguntas | Uso |
+|---|---|---|
+| `tests/eval/bateria_cega.py` | 28 | Corrigimos o motor olhando para elas |
+| `tests/eval/validacao.py` | 20 | Escritas **depois**, nunca usadas no ajuste |
+| `tests/eval/coloquial.py` | 18 | Linguagem de balcão ("ô, me vê quantos livro tem") |
+
+Reproduza com:
+
+```powershell
+.\venv\Scripts\python -m pytest tests/eval/test_acuracia.py -s
+```
+
+> **Nota metodológica honesta:** os três conjuntos foram escritos pela mesma
+> pessoa que ajustou o motor, num intervalo de horas. Isso reduz o risco de
+> sobreajuste, mas não é o mesmo que uma bateria coletada por usuários reais ao
+> longo de semanas. O harness está pronto para receber perguntas novas
+> (`docs/AVALIACAO-MOTOR.md`).
 
 ---
 
