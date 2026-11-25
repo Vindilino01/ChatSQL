@@ -87,10 +87,12 @@ docker compose up --build
 
 ## Pronto quando
 
-- [ ] `docker compose up` funciona a partir de um clone limpo.
-- [ ] Os testes rodam sozinhos a cada envio (badge verde no README).
-- [ ] `PRD.md` com resultados e prints.
+- [x] Os testes rodam sozinhos a cada envio (badge verde no README).
+- [x] `PRD.md` com resultados medidos.
+- [ ] Prints das telas em `docs/imagens/` e no `PRD.md`.
 - [ ] Slides prontos e demo ensaiada (com vídeo de backup).
+- [ ] `docker compose up` funciona a partir de um clone limpo (opcional:
+      o app já roda com 3 comandos).
 
 ## Mini-glossário
 

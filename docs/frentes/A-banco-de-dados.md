@@ -63,10 +63,12 @@ Aba **Dados** -> marque **Banco de dados (Postgres/SQLite)** -> cole a URL ->
 
 ## Pronto quando
 
-- [ ] `pytest tests/test_db_connector.py -v` passa.
-- [ ] Um teste real em Postgres foi feito (com usuário read-only).
-- [ ] Se mexeu em algo novo, criou o teste correspondente.
-- [ ] Atualizou este guia ou o `ROADMAP.md` se mudou o combinado.
+- [x] `pytest tests/test_db_connector.py -v` passa.
+- [x] Um teste real em Postgres foi feito (com usuário read-only, no Neon).
+- [x] Se mexeu em algo novo, criou o teste correspondente.
+- [x] Atualizou este guia ou o `ROADMAP.md` se mudou o combinado.
+
+**Falta (evolução, não bloqueia a entrega):** suporte a MySQL.
 
 ## Mini-glossário
 

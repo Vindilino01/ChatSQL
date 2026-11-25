@@ -70,10 +70,13 @@ Carregue um exemplo e faça a pergunta. Se não entender, ele mostra um
 
 ## Pronto quando
 
-- [ ] `pytest` verde.
-- [ ] Você adicionou pelo menos 1 teste para o que ensinou.
-- [ ] A pergunta nova funciona no app.
-- [ ] Se mudou a acurácia, atualizou o `PRD.md`.
+- [x] `pytest` verde.
+- [x] Você adicionou pelo menos 1 teste para o que ensinou.
+- [x] A pergunta nova funciona no app.
+- [x] Se mudou a acurácia, atualizou o `PRD.md` (95/95).
+
+**Falta:** a bateria cega do grupo (perguntas escritas por quem não viu o
+motor). Instruções em [`../AVALIACAO-MOTOR.md`](../AVALIACAO-MOTOR.md).
 
 ## Mini-glossário
 
