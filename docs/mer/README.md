@@ -76,7 +76,7 @@ Não é draw.io, mas gera imagem pronta para o relatório.
 | `autor` | Quem escreveu | 277 |
 | `editora` | Quem publicou | 40 |
 | `livro_autor` | Liga livro↔autor (N:N) | 481 |
-| `exemplar` | A cópia física | 744 |
+| `exemplar` | A cópia física | 747 |
 | `usuario` | Aluno, professor ou funcionário | 800 |
 | `emprestimo` | Retiradas e devoluções | 2.500 |
 

@@ -68,6 +68,27 @@ QUARTO_CONJUNTO: list[tuple[str, str]] = [
         "SELECT l.titulo, COUNT(*) FROM livro l JOIN exemplar e "
         "ON e.id_livro = l.id_livro GROUP BY l.titulo",
     ),
+    # --- filtro por nacionalidade (país e gentílico) ---
+    (
+        "quantos autores brasileiros existem",
+        "SELECT COUNT(*) FROM autor WHERE nacionalidade = 'Brasil'",
+    ),
+    (
+        "quantos autores são de Portugal",
+        "SELECT COUNT(*) FROM autor WHERE nacionalidade = 'Portugal'",
+    ),
+    (
+        "liste os autores moçambicanos",
+        "SELECT nome FROM autor WHERE nacionalidade = 'Moçambique'",
+    ),
+    (
+        "quantos autores alemães existem",
+        "SELECT COUNT(*) FROM autor WHERE nacionalidade = 'Alemanha'",
+    ),
+    (
+        "quantos autores dos Estados Unidos",
+        "SELECT COUNT(*) FROM autor WHERE nacionalidade = 'Estados Unidos'",
+    ),
     # --- listagens ---
     (
         "liste o nome de todas as editoras",

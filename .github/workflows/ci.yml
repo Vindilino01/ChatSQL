@@ -1,0 +1,65 @@
+name: CI
+
+# Roda a cada push e em pull request para a main. Os testes que dependem do
+# banco da demonstração (Neon) se pulam sozinhos quando a variável não existe,
+# então o CI não precisa de credencial nenhuma.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  testes:
+    name: Testes (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Instalar dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Lint (pyflakes)
+        run: python -m pyflakes chat_sql app.py scripts tests
+
+      - name: Testes
+        env:
+          # Garante que os testes de banco (Neon) sejam pulados no CI.
+          CHATSQL_SEED_URL: ""
+        run: python -m pytest -q --deselect tests/eval
+
+  # Job separado: só roda quando o secret existe. Um `if` em cima de
+  # `secrets.*` não funciona dentro do mesmo job — o GitHub não expõe o valor
+  # para a expressão, e o teste seria silenciosamente pulado.
+  avaliacao-com-banco:
+    name: Acurácia contra o banco real
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+      - name: Medir acurácia
+        env:
+          CHATSQL_SEED_URL: ${{ secrets.CHATSQL_SEED_URL }}
+        run: python -m pytest -q -s tests/eval

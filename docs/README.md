@@ -53,10 +53,14 @@ Este é o **índice**. Encontre aqui o que você precisa; cada link leva direto 
 | [../README.md](../README.md) | Porta de entrada: o que é e como rodar |
 | [../ROADMAP.md](../ROADMAP.md) | O que falta fazer, por frente e por semana |
 | [../PRD.md](../PRD.md) | Documento do projeto (visão, arquitetura, resultados) |
+| [../RELATORIO.md](../RELATORIO.md) | O relatório escrito, com marcações do que preencher |
+| [../PRODUCT.md](../PRODUCT.md) | Público, propósito e limites do produto |
+| [../DESIGN.md](../DESIGN.md) | Sistema visual: cores, tipografia e regras |
 | [../CONTRIBUTING.md](../CONTRIBUTING.md) | Como contribuir, testar e abrir um PR |
 | [../CONTEXT.md](../CONTEXT.md) | Glossário: o que cada palavra quer dizer |
 | [adr/](adr/) | Decisões importantes que já tomamos |
 | [BANCO.md](BANCO.md) | O schema da biblioteca e o porquê de cada restrição |
+| [../LICENSE](../LICENSE) | Licença MIT |
 | [../tests/](../tests/) | Os testes, que também servem de exemplo |
 
 ---

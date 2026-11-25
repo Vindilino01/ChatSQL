@@ -14,6 +14,7 @@ from ..schema import Column, Schema, Table
 from . import lexicon as lex
 from .builder import SqlBuilder
 from .dialect import Dialect, get_dialect, normalize_name
+from .gentilicos import pais_do_gentilico, pais_pelo_nome
 from .portugues import humanize_column, plural_pt, quantos_concorda
 from .text import forms, normalize, plural, position, question_forms, singular
 
@@ -747,6 +748,42 @@ def _extract_domain_filter(question: str, subject: Table) -> Filter | None:
             return Filter("text", subject.name, coluna, "=", valor)
     return None
 
+def _extract_nationality_filter(question: str, subject: Table) -> Filter | None:
+    """Filtra por nacionalidade, aceitando o país ou o gentílico.
+
+    "autores brasileiros" e "autores do Brasil" precisam dar o mesmo SQL.
+    Antes, nenhuma das duas filtrava: a resposta era a contagem inteira (277)
+    sem nenhum aviso de que o filtro foi ignorado.
+
+    O reconhecimento é por vocabulário fechado (`PAISES` e `GENTILICOS`), não
+    por heurística: adivinhar "qualquer palavra desconhecida é um país" faria
+    "quantos autores existem" filtrar por "existem".
+    """
+    if not any(coluna.name.lower() == "nacionalidade" for coluna in subject.columns):
+        return None
+    # Agrupamento tem prioridade: "por nacionalidade" é GROUP BY, não filtro.
+    if re.search(r"\bpor\b", question):
+        return None
+
+    palavras = question.split()
+
+    # Gentílico: uma palavra só ("brasileiros", "franceses").
+    for palavra in palavras:
+        pais = pais_do_gentilico(palavra)
+        if pais:
+            return Filter("text", subject.name, "nacionalidade", "=", pais)
+
+    # Nome do país: até três palavras, para pegar "Estados Unidos",
+    # "Reino Unido" e "Bósnia e Herzegovina".
+    for tamanho in (3, 2, 1):
+        for inicio in range(len(palavras) - tamanho + 1):
+            trecho = " ".join(palavras[inicio : inicio + tamanho])
+            pais = pais_pelo_nome(trecho)
+            if pais:
+                return Filter("text", subject.name, "nacionalidade", "=", pais)
+    return None
+
+
 def _extract_text_filter(question: str, subject: Table) -> Filter | None:
     if re.search(r"\bpor\b", question):
         return None
@@ -1123,6 +1160,7 @@ class OfflineEngine:
             lambda: _extract_boolean_filter(q, subject),
             lambda: _extract_null_filter(q, subject),
             lambda: _extract_domain_filter(q, subject),
+            lambda: _extract_nationality_filter(q, subject),
             lambda: _extract_like_filter(q, subject),
             lambda: _extract_text_filter(q, subject),
         ):

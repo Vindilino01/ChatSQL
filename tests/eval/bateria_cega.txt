@@ -1,0 +1,25 @@
+# Bateria cega — perguntas de quem NÃO viu o código
+#
+# COMO USAR
+# 1. Peça a cada pessoa do grupo 8 perguntas sobre a biblioteca, do jeito que
+#    ela falaria no balcão. Sem olhar o motor, sem ler os testes.
+# 2. Cole as perguntas abaixo, uma por linha, sem numeração e sem pontuação
+#    especial. Linhas com # são ignoradas.
+# 3. Rode:
+#
+#      .\venv\Scripts\python scripts\medir_bateria_cega.py
+#
+# 4. O script gera o SQL de cada pergunta, executa e mostra o resultado.
+#    Vocês conferem à mão se a resposta faz sentido — é isso que mede a
+#    acurácia real, não o número que o próprio autor do motor mediu.
+#
+# Enquanto este arquivo só tiver estas linhas de comentário, a medição é
+# pulada: melhor nenhum número do que um número inventado.
+#
+# ---------------------------------------------------------------------------
+# Exemplos do formato (apague e substitua pelas perguntas reais):
+#
+# quantos livros temos cadastrados
+# quais são os autores brasileiros
+# quantos empréstimos estão atrasados
+# qual editora publicou mais livros

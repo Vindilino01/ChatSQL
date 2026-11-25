@@ -21,7 +21,7 @@ pip install -r requirements-dev.txt
 pytest
 ```
 
-Se tudo passar (133 testes + 6 guias `skip`), você está pronto.
+Se tudo passar (**344 passando** + 2 guias `skip`), você está pronto.
 
 ## 2. Fluxo de trabalho
 
@@ -36,9 +36,18 @@ Se tudo passar (133 testes + 6 guias `skip`), você está pronto.
 
 - Todo comportamento novo precisa de teste.
 - Os arquivos `tests/test_*.py` funcionam como **especificação**: leia antes de implementar.
-- Testes marcados com `@pytest.mark.skip` são **guias** das features do roadmap.
-  Ao implementar, remova o `skip`.
 - Rode um teste só: `pytest tests/test_db_connector.py -v`.
+
+**O CI roda sozinho** a cada push e Pull Request
+(`.github/workflows/ci.yml`): lint com `pyflakes` e a suíte em Python 3.11, 3.12
+e 3.13. Se o check ficar vermelho no GitHub, o PR não deve ser mesclado.
+
+O que o CI **não** roda: os testes de `tests/eval/`, porque precisam do banco da
+demonstração. Eles se pulam sozinhos sem `CHATSQL_SEED_URL`. Para rodá-los:
+
+```powershell
+.\venv\Scripts\python -m pytest tests/eval -s
+```
 
 ## 4. Estilo
 
@@ -46,6 +55,11 @@ Se tudo passar (133 testes + 6 guias `skip`), você está pronto.
 - Nomes de funções/variáveis claros; evite abreviações.
 - Nada de `print`; use mensagens na tela.
 - Uma responsabilidade por arquivo (veja `docs/ARQUITETURA.md`).
+- Antes de commitar, rode o mesmo lint do CI:
+
+  ```powershell
+  .\venv\Scripts\python -m pyflakes chat_sql app.py scripts tests
+  ```
 
 ## 5. Receitas
 

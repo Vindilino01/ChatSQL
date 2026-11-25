@@ -126,12 +126,31 @@ Sete tabelas, em terceira forma normal:
 | `autor` | Quem escreveu | 277 |
 | `editora` | Quem publicou | 40 |
 | `livro_autor` | Liga livro e autor (N:N) | 481 |
-| `exemplar` | A cópia física | 744 |
+| `exemplar` | A cópia física | 747 |
 | `usuario` | Aluno, professor ou funcionário | 800 |
 | `emprestimo` | Retirada e devolução | 2.500 |
 
 Detalhamento completo em [`docs/mer/`](docs/mer/README.md): MER conceitual,
 dicionário de dados, integridade, índices e prova de normalização.
+
+### 5.1.1 O que é real e o que é gerado
+
+A banca costuma perguntar. A resposta é explícita no repositório:
+
+| Dado | Origem |
+|---|---|
+| Título, ano da primeira publicação, autor | **Reais** — 456 obras do acervo |
+| Nacionalidade do autor | **Real**, autor por autor (277 registros) |
+| Nome e país das editoras | **Reais** — 40 editoras |
+| Editora de cada obra | **Atribuída por área** — plausível, não é a edição física |
+| ISBN | Sintético, com dígito verificador válido |
+| Exemplares, usuários, empréstimos | Gerados |
+
+A atribuição de editora por área foi uma decisão de projeto: o acervo real
+registra obra, autor e ano, mas não a edição. Em vez de sortear entre as 40
+editoras — o que colocava `1984` na Artmed —, cada obra recebe uma editora que
+de fato publica aquele tipo de livro, de forma determinística (o mesmo título
+sempre cai na mesma editora, então rodar o seed duas vezes não muda o banco).
 
 ### 5.2 Integridade
 
@@ -212,10 +231,10 @@ referência escrita à mão — não basta "rodou sem erro".
 | Bateria de desenvolvimento | 28 | 28 (100%) |
 | Validação cega (escrita depois) | 20 | 20 (100%) |
 | Linguagem coloquial | 18 | 18 (100%) |
-| Quarto conjunto (só do dicionário) | 25 | 25 (100%) |
-| **Total** | **91** | **91 (100%)** |
+| Quarto conjunto (só do dicionário) | 30 | 30 (100%) |
+| **Total** | **95** | **95 (100%)** |
 
-Recusa de perguntas fora do domínio: 5 de 5.
+Recusa de perguntas fora do domínio: 6 de 6.
 
 `[PRENCHER: parágrado interpretando o resultado e citando a limitação
 metodológica da seção 9.]`
@@ -229,7 +248,7 @@ metodológica da seção 9.]`
 
 ### 8.3 Qualidade de software
 
-240 testes automatizados, cobrindo: a Trava (matriz de permitir/negar), o loop de
+347 testes automatizados (344 passando, 2 guias desativados), cobrindo: a Trava (matriz de permitir/negar), o loop de
 correção, a integridade referencial do gerador de dados, os dois dialetos SQL, a
 leitura de planilhas, Google Sheets público, importação de dump `.sql`, a conexão
 lembrada (sem senha) e o fluxo completo de conexão.

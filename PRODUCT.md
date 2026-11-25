@@ -82,11 +82,11 @@ multi-instituição com autenticação; integração com sistema de gestão.
 
 ## Evidence on Hand
 
-- Banco real com **456 obras**, 277 autores, 40 editoras, 744 exemplares,
+- Banco real com **456 obras**, 277 autores, 40 editoras, 747 exemplares,
   800 usuários e 2.500 empréstimos (`scripts/seed_biblioteca.py`).
 - **91 perguntas** de avaliação em quatro conjuntos, comparadas por resultado,
   com nota metodológica honesta em `PRD.md`.
-- **240 testes automatizados** passando.
+- **344 testes automatizados** passando (342 coletados, 2 guias desativados).
 - Documentação do banco gerada do schema em uso (`docs/mer/`, 9 arquivos).
 - Medições reais: conexão 6,4 s (com cold start do Neon), consulta 0,23 s.
 - **Não existe:** pesquisa com usuários reais, depoimentos, teste de usabilidade

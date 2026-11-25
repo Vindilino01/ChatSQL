@@ -155,7 +155,7 @@ ChatSQL/
 ```bash
 python -m venv venv
 .\venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 streamlit run app.py
 ```
 
@@ -175,11 +175,11 @@ pytest
 | Acurácia — bateria de desenvolvimento | **28/28 (100%)** |
 | Acurácia — validação cega (nunca usada no ajuste) | **20/20 (100%)** |
 | Acurácia — linguagem coloquial | **18/18 (100%)** |
-| Acurácia — quarto conjunto (escrito do dicionário de dados) | **25/25 (100%)** |
-| **Total dos quatro conjuntos** | **91/91 (100%)** |
-| Recusa de perguntas fora do domínio | **5/5** |
+| Acurácia — quarto conjunto (escrito do dicionário de dados) | **30/30 (100%)** |
+| **Total dos quatro conjuntos** | **95/95 (100%)** |
+| Recusa de perguntas fora do domínio | **6/6** |
 | Testes automatizados | **208** + 6 guias desativados |
-| Registros no banco da demo | ~5.300 (456 livros reais, 277 autores, 40 editoras, 744 exemplares, 800 usuários, 2.500 empréstimos) |
+| Registros no banco da demo | ~5.300 (456 livros reais, 277 autores, 40 editoras, 747 exemplares, 800 usuários, 2.500 empréstimos) |
 | Conexão ao banco remoto | **6,4 s** (inclui cold start do Neon) |
 | Cada consulta | **0,23 s** (pool quente) |
 
@@ -193,7 +193,7 @@ devolver o mesmo que um SQL de referência escrito à mão) — não basta "roda
 | `tests/eval/bateria_cega.py` | 28 | Corrigimos o motor olhando para elas |
 | `tests/eval/validacao.py` | 20 | Escritas **depois**, nunca usadas no ajuste |
 | `tests/eval/coloquial.py` | 18 | Linguagem de balcão ("ô, me vê quantos livro tem") |
-| `tests/eval/quarto_conjunto.py` | 25 | Escritas **só com o dicionário de dados**, sem abrir o código |
+| `tests/eval/quarto_conjunto.py` | 30 | Escritas **só com o dicionário de dados**, sem abrir o código |
 
 Reproduza com:
 

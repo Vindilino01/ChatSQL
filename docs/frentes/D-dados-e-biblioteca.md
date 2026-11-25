@@ -15,8 +15,7 @@ as formas de entrar com dados: planilhas, Google Sheets e dump `.sql`.
 
 | Arquivo | O que é |
 |---|---|
-| `schemas/biblioteca.sql` | **A criar**: o banco da biblioteca (livros, autores, exemplares, usuários, empréstimos). |
-| `schemas/biblioteca-postgres.sql` | **Pronto**: o DDL revisado, para Postgres/Neon. |
+| `schemas/biblioteca-postgres.sql` | **Pronto**: o DDL revisado, para Postgres/Neon. É o schema real, extraído do banco em uso. |
 | `docs/BANCO.md` | **Pronto**: por que cada restrição e índice existe. |
 | `scripts/apply_ddl.py` | **Pronto**: aplica o DDL no banco do `.env`. |
 | `chat_sql/sample_data.py` | Cria dados de exemplo automaticamente (a função `generate_sample_data`). |
@@ -27,55 +26,43 @@ as formas de entrar com dados: planilhas, Google Sheets e dump `.sql`.
 | `tests/test_spreadsheet.py` | Testes de planilhas. |
 | `tests/test_sheets.py` e `tests/test_sql_dump.py` | Testes das duas fontes novas (14 casos). |
 
-## Primeira tarefa (passo a passo): criar o banco da biblioteca
+## Primeira tarefa: o banco da biblioteca (já pronto)
 
-1. Crie o arquivo `schemas/biblioteca.sql`.
-2. Escreva as tabelas assim (modelo):
-   ```sql
-   CREATE TABLE autores (
-       id INTEGER PRIMARY KEY,
-       nome TEXT NOT NULL
-   );
+**Não é preciso criar nada.** O schema real está em
+`schemas/biblioteca-postgres.sql`, foi aplicado no Neon e é de onde saem os
+diagramas de `docs/mer/`.
 
-   CREATE TABLE livros (
-       id INTEGER PRIMARY KEY,
-       titulo TEXT NOT NULL,
-       autor_id INTEGER,
-       ano INTEGER,
-       FOREIGN KEY (autor_id) REFERENCES autores(id)
-   );
+Para conferir o que existe:
 
-   CREATE TABLE usuarios (
-       id INTEGER PRIMARY KEY,
-       nome TEXT NOT NULL,
-       email TEXT
-   );
+```powershell
+.\venv\Scripts\python -m pytest tests/test_schema.py -v
+```
 
-   CREATE TABLE emprestimos (
-       id INTEGER PRIMARY KEY,
-       livro_id INTEGER NOT NULL,
-       usuario_id INTEGER NOT NULL,
-       data_emprestimo DATE,
-       data_devolucao DATE,
-       FOREIGN KEY (livro_id) REFERENCES livros(id),
-       FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
-   );
-   ```
-3. Teste no app: aba **Dados** -> **Script SQL** -> cole o conteúdo -> **Carregar script**.
+Se um dia precisar replicar em outro banco:
 
-## Segunda tarefa: gerar 10 mil registros
+```powershell
+.\venv\Scripts\python scripts\apply_ddl.py
+```
 
-O projeto já cria dados de exemplo automaticamente. Para aumentar a quantidade:
-- Na aba **Dados** -> **Schema de exemplo**, o controle "Linhas por tabela" vai até 500.
-- Para 10 mil, use o código:
-  ```python
-  from chat_sql.schema import parse_schema
-  from chat_sql.sample_data import generate_sample_data
+O passo a passo de conexão está em [`../COMO-CONECTAR.md`](../COMO-CONECTAR.md).
 
-  schema = parse_schema(open("schemas/biblioteca.sql", encoding="utf-8").read())
-  dados = generate_sample_data(schema, 10000)
-  ```
-- O gerador respeita as relações (um empréstimo só aponta para livro/usuário que existem).
+## Segunda tarefa: dados da demonstração (já pronto)
+
+O banco tem 456 obras reais, 277 autores e 40 editoras, com a contagem
+conferida por teste (`tests/test_documentacao.py`). Para ver os números:
+
+```powershell
+.\venv\Scripts\python -m scripts.contagens
+```
+
+Para recarregar do zero — ou aumentar o volume:
+
+```powershell
+.\venv\Scripts\python scripts\seed_biblioteca.py --usuarios 2000 --emprestimos 8000
+```
+
+O gerador respeita as relações: um empréstimo só aponta para livro e usuário
+que existem, e o banco recusa dois empréstimos abertos do mesmo exemplar.
 
 ## Terceira tarefa: Google Sheets (D1) e dump `.sql` (D2)
 

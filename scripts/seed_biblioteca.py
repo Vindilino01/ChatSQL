@@ -1,8 +1,14 @@
 """Popula o banco da biblioteca com dados fictícios sobre um acervo real.
 
-Obras, autores e editoras são reais (ver scripts/acervo_biblioteca.py). Os
-ISBNs são sintéticos (válidos no dígito verificador) e exemplares, usuários e
-empréstimos são gerados.
+Obras, autores, nacionalidades e editoras vêm de dados reais:
+
+- `scripts/acervo_biblioteca.py`: as 456 obras e as 40 editoras;
+- `scripts/acervo_nacionalidades.py`: o país de cada um dos 277 autores;
+- `scripts/acervo_editoras.py`: a editora de cada obra, por área.
+
+Os ISBNs são sintéticos (válidos no dígito verificador) e exemplares, usuários e
+empréstimos são gerados. A ligação obra -> editora é plausível, não a edição
+real que a biblioteca possui (ver o docstring de `acervo_editoras`).
 
 Uso:
     .\\venv\\Scripts\\python scripts\\seed_biblioteca.py [--usuarios N]
@@ -32,14 +38,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from acervo_biblioteca import EDITORAS, OBRAS  # noqa: E402
+from acervo_editoras import editora_para  # noqa: E402
+from acervo_nacionalidades import NACIONALIDADE_AUTORES  # noqa: E402
 
 TIPOS_USUARIO = ("aluno", "professor", "funcionario")
 ESTADOS = ("bom", "bom", "bom", "bom", "danificado", "em_manutencao", "extraviado", "descartado")
-NACIONALIDADES = (
-    "Brasil", "Portugal", "Argentina", "Chile", "Colômbia", "México", "Espanha",
-    "França", "Itália", "Alemanha", "Reino Unido", "Estados Unidos", "Rússia",
-    "Japão", "China", "Nigéria", "Angola", "Moçambique", "Áustria", "Irlanda",
-)
 
 # Quantos exemplares cada livro recebe (a maioria tem 1 ou 2).
 def _exemplares_por_livro(rng: random.Random) -> int:
@@ -89,33 +92,48 @@ def main() -> int:
 
             # ---- editoras ----
             print(f"inserindo {len(EDITORAS)} editoras...")
-            editora_ids: list[int] = []
+            editora_ids_por_nome: dict[str, int] = {}
             for nome, pais in EDITORAS:
                 cur.execute(
                     "INSERT INTO editora (nome, pais) VALUES (%s, %s) RETURNING id_editora",
                     (nome, pais),
                 )
-                editora_ids.append(cur.fetchone()[0])
+                editora_ids_por_nome[nome] = cur.fetchone()[0]
 
             # ---- autores ----
             nomes_autores = sorted({autor for _, autores, _ in OBRAS for autor in autores})
             print(f"inserindo {len(nomes_autores)} autores...")
             autor_ids: dict[str, int] = {}
             for nome in nomes_autores:
+                nacionalidade = NACIONALIDADE_AUTORES.get(nome)
+                if nacionalidade is None:
+                    # Falha alto: sortear aqui foi o que produziu Machado de
+                    # Assis nigeriano. Melhor parar do que gravar dado errado.
+                    raise SystemExit(
+                        f"ERRO: sem nacionalidade para o autor {nome!r}. "
+                        "Acrescente em scripts/acervo_nacionalidades.py."
+                    )
                 cur.execute(
                     "INSERT INTO autor (nome, nacionalidade) VALUES (%s, %s) RETURNING id_autor",
-                    (nome, rng.choice(NACIONALIDADES)),
+                    (nome, nacionalidade),
                 )
                 autor_ids[nome] = cur.fetchone()[0]
 
             # ---- livros ----
             print(f"inserindo {len(OBRAS)} livros...")
+            editora_por_nome = dict(EDITORAS)
             livro_rows: list[tuple[int, int]] = []  # (id_livro, quantidade de exemplares)
             for titulo, autores, ano in OBRAS:
+                nome_editora = editora_para(titulo, autores)
+                if nome_editora not in editora_por_nome:
+                    raise SystemExit(
+                        f"ERRO: editora {nome_editora!r} (de {titulo!r}) não existe "
+                        "em acervo_biblioteca.EDITORAS."
+                    )
                 cur.execute(
                     "INSERT INTO livro (titulo, isbn, ano_publicacao, id_editora) "
                     "VALUES (%s, %s, %s, %s) RETURNING id_livro",
-                    (titulo, _isbn13(rng), ano, rng.choice(editora_ids)),
+                    (titulo, _isbn13(rng), ano, editora_ids_por_nome[nome_editora]),
                 )
                 livro_id = cur.fetchone()[0]
                 for autor in autores:

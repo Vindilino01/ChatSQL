@@ -97,9 +97,19 @@ contêm Dom".
 O script lê `CHATSQL_SEED_URL` do `.env`, recria as tabelas e imprime um resumo
 (tabelas, índices, restrições, extensões). Nunca imprime a senha.
 
-O seed usa um **acervo real** (obras, autores e editoras que existem) definido em
-`scripts/acervo_biblioteca.py`. Os ISBNs são sintéticos e exemplares, usuários e
-empréstimos são gerados.
+O seed usa um **acervo real** definido em `scripts/acervo_biblioteca.py` (456
+obras e 40 editoras), com a nacionalidade dos 277 autores em
+`scripts/acervo_nacionalidades.py` e a editora de cada obra em
+`scripts/acervo_editoras.py`.
+
+| Dado | Origem |
+|---|---|
+| Título, ano da 1ª publicação, autor | Reais |
+| Nacionalidade do autor | Real, autor por autor |
+| Nome e país da editora | Reais |
+| Editora de cada obra | Atribuída por área (plausível, não é a edição real) |
+| ISBN | Sintético (dígito verificador válido) |
+| Exemplares, usuários, empréstimos | Gerados |
 
 > **Atenção:** o script **remove** as tabelas antes de recriar. É intencional
 > durante o desenvolvimento; não rode em produção.

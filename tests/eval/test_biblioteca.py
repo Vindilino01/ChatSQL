@@ -38,7 +38,10 @@ CASES: list[tuple[str, str]] = [
     ("liste os livros", "SELECT titulo FROM livro;"),
     (
         "quantos livros existem por editora",
-        "SELECT id_editora, COUNT(*) FROM livro GROUP BY id_editora;",
+        # Agrupar pelo nome, não pelo id: o resultado é o mesmo, mas o id não
+        # significa nada para quem lê a tabela na tela.
+        "SELECT editora.nome, COUNT(*) FROM livro JOIN editora "
+        "ON editora.id_editora = livro.id_editora GROUP BY editora.nome;",
     ),
     (
         "quantos emprestimos por mes",
