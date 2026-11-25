@@ -871,10 +871,36 @@ class OfflineEngine:
         measure = plan.measure
 
         # Agregação pedida ("maior", "total"...) sem uma coluna que possa ser
-        # medida (ex.: "maiores por ano_publicacao"). Nesse caso, não é possível
-        # calcular a agregação — retorna None para que _analyze exiba erro claro.
+        # medida. Há dois casos distintos:
+        #
+        #   1. A pergunta é um RANKING ("os 5 maiores por ano_publicacao"):
+        #      o usuário quer uma lista ordenada, não uma soma. Resolvemos
+        #      como listagem ordenada.
+        #   2. A pergunta pede uma CONTA de verdade ("total de ano_publicacao"):
+        #      não há resposta possível — devolvemos erro claro.
+        #
+        # O critério é o `plan.limit`/ordenação: ranking tem limite explícito
+        # e/ou vem de palavras como "maiores"/"menores"/"recentes".
         if plan.intent in ("sum", "avg", "min", "max") and measure is None:
-            return None
+            ranking = (
+                plan.limit is not None
+                or plan.order_by is not None
+                or bool(
+                    re.search(
+                        r"\b(maiores|menores|melhores|piores|primeiros|primeiras|"
+                        r"recentes|recente|ultimos|ultimo|ultimas|ultima|"
+                        r"antigos|antigo|antigas|antiga|mais caros|mais baratos)\b",
+                        plan.question,
+                    )
+                )
+            )
+            if not ranking:
+                return None
+            plan.intent = "list"
+            if plan.order_by is None and group_col is not None:
+                plan.order_by = group_col
+            plan.order_desc = plan.order_desc or True
+            group_col = None
 
         # Se o motor escolheu a MESMA coluna para agrupar e para medir, a
         # consulta viraria "SELECT x, SUM(x) GROUP BY x" — sem sentido.

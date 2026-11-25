@@ -69,9 +69,17 @@ def test_rank_without_measure_orders_instead_of_failing():
     assert "ORDER BY" in sql and "LIMIT 5" in sql
 
 
-def test_aggregation_without_measure_falls_back_to_listing():
-    sql = OfflineEngine().generate_sql("Qual o total de ano_publicacao?", BIBLIOTECA)
-    assert sql is not None
+def test_aggregation_without_measure_returns_clear_error():
+    """Somar um ano não faz sentido: o motor deve explicar, não inventar.
+
+    Decisão alinhada com a correção do Jean (commit c835836): não rebaixar
+    silenciosamente para listagem quando a pergunta pede uma agregação real.
+    """
+    engine = OfflineEngine()
+    sql = engine.generate_sql("Qual o total de ano_publicacao?", BIBLIOTECA)
+    assert sql is None
+    assert engine.last_reason
+    assert "coluna" in engine.last_reason.lower() or "numérica" in engine.last_reason.lower()
 
 
 def test_suggestions_are_all_answerable():
