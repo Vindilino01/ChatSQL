@@ -86,7 +86,7 @@ multi-instituição com autenticação; integração com sistema de gestão.
   800 usuários e 2.500 empréstimos (`scripts/seed_biblioteca.py`).
 - **91 perguntas** de avaliação em quatro conjuntos, comparadas por resultado,
   com nota metodológica honesta em `PRD.md`.
-- **344 testes automatizados** passando (342 coletados, 2 guias desativados).
+- **345 testes automatizados** passando (347 coletados, 2 guias desativados).
 - Documentação do banco gerada do schema em uso (`docs/mer/`, 9 arquivos).
 - Medições reais: conexão 6,4 s (com cold start do Neon), consulta 0,23 s.
 - **Não existe:** pesquisa com usuários reais, depoimentos, teste de usabilidade

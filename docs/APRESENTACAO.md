@@ -101,9 +101,12 @@ colar, com o resultado já visto antes.
 | Tabelas / colunas | 7 / 29 |
 | Registros | ~5.300 |
 | Obras reais | 456 (de 1532 a 2024) |
+| Autores com nacionalidade real | 277 |
 | Tempo de conexão | 6,4 s |
 | Tempo por consulta | 0,23 s |
-| Testes automatizados | 204 |
+| Acurácia do motor (4 conjuntos) | 95/95 (100%) |
+| Testes automatizados | 345 passando (347 coletados) |
+| CI | verde em Python 3.11, 3.12 e 3.13 |
 
 - "O banco está no Neon, com usuário somente leitura, e é o mesmo que vocês
   acabaram de ver."

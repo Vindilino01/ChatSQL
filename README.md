@@ -1,6 +1,7 @@
 # Chat SQL
 
 <p align="center">
+  <a href="https://github.com/Vindilino01/ChatSQL/actions/workflows/ci.yml"><img src="https://github.com/Vindilino01/ChatSQL/actions/workflows/ci.yml/badge.svg?style=for-the-badge" alt="CI"/></a>
   <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white"/>
   <img src="https://img.shields.io/badge/Streamlit-UI-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white"/>
   <img src="https://img.shields.io/badge/sqlglot-Trava-4B5563?style=for-the-badge"/>

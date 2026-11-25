@@ -165,23 +165,37 @@ def _testes_declarados() -> int:
 
 
 def test_a_documentacao_diz_o_numero_certo_de_testes():
-    """O README cita "340 testes"; a suíte precisa ter exatamente isso.
+    """Nenhum arquivo pode citar um número de testes que não existe.
 
     Número de teste é a métrica mais fácil de auditar num portfólio — e a mais
-    fácil de deixar envelhecer. Este teste falha quando alguém acrescenta um
-    teste e esquece de atualizar a documentação (ou inventa um número).
+    fácil de deixar envelhecer (o APRESENTACAO chegou a citar 204 quando a
+    suíte já tinha 340). Este teste varre todos os `.md`.
     """
     coletados = _testes_declarados()
     assert coletados > 100, f"coleta suspeita: {coletados} testes"
 
-    texto = _texto("README.md")
-    citados = {int(n) for n in re.findall(r"\*\*(\d+)\*\*\s*$", texto, re.M)}
-    citados |= {int(n) for n in re.findall(r"(\d+)\s+testes", texto)}
-    assert citados, "o README não cita o número de testes"
-    assert coletados in citados, (
-        f"a suíte coleta {coletados} testes, o README cita {sorted(citados)}. "
-        f"Atualize os arquivos .md."
+    # Números de "passando" e "coletados" são ambos verdadeiros.
+    aceitos = {coletados, coletados - 2}
+
+    erros: list[str] = []
+    for arquivo in list(RAIZ.glob("*.md")) + list((RAIZ / "docs").rglob("*.md")):
+        if "venv" in arquivo.parts:
+            continue
+        texto = arquivo.read_text(encoding="utf-8")
+        for achado in re.findall(r"(\d{2,4})\s+testes", texto):
+            citado = int(achado)
+            if citado not in aceitos and citado > 50:
+                erros.append(f"{arquivo.name}: {citado} testes")
+
+    assert not erros, (
+        f"a suíte coleta {coletados} testes; estes arquivos citam outro número:\n"
+        + "\n".join(erros)
     )
+
+    assert any(
+        str(coletados) in (RAIZ / "README.md").read_text(encoding="utf-8")
+        for _ in [0]
+    ), f"o README precisa citar {coletados}"
 
 
 def test_total_de_perguntas_avaliadas_confere():

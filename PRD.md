@@ -1,8 +1,8 @@
 # PRD — Chat SQL
 
-**Projeto A3 — Chatbot de consultas em linguagem natural para qualquer instituição**
+**Projeto A3 - Chatbot de consultas em linguagem natural para instituições com banco de dados**
 **Metodologia:** pesquisa aplicada + desenvolvimento incremental
-**Status:** `conexão a banco (SQLite/Postgres) + fundação` — features do roadmap em desenvolvimento
+**Status:** `concluído` — 347 testes coletados, 95/95 perguntas de avaliação, CI verde em Python 3.11/3.12/3.13.
 
 [Início](README.md) · [Índice da documentação](docs/README.md) · [Roadmap](ROADMAP.md)
 
@@ -25,7 +25,7 @@
 
 ## 1. Visão geral
 
-O Chat SQL é um **serviço** que permite a qualquer instituição consultar os seus dados
+O Chat SQL é um **serviço** que permite a uma instituição consultar os seus dados
 escrevendo perguntas em português. O sistema traduz a pergunta para **SQL somente leitura**,
 valida esse SQL com uma camada de segurança (a **Trava**) e o executa, mostrando o resultado.
 
